@@ -15,6 +15,22 @@ DATABASEURI = "postgresql://ccr2157:ccr2157@w4111.cisxo09blonu.us-east-1.rds.ama
 
 engine = create_engine(DATABASEURI)
 
+
+
+@app.before_request
+def before_request():
+    # Open a database connection at the start of each request
+    g.conn = engine.connect()
+
+@app.teardown_request
+def teardown_request(exception):
+    # Close the database connection at the end of each request
+    try:
+        if g.conn:
+            g.conn.close()
+    except Exception as e:
+        print(f"Error closing connection: {e}")
+
 @app.route('/topics')
 def view_topics():
     with engine.connect() as connection:
