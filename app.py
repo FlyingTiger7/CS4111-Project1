@@ -6,29 +6,25 @@ from flask import Flask, request, render_template, g, redirect, Response
 app = Flask(__name__)
 
 
-DB_USER = "ah4100"
-DB_PASSWORD = "03220322"
+DB_USER = "ccr2157"
+DB_PASSWORD = "ccr2157"
 
-DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.com"
+DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.comw/w4111"
 
-DATABASEURI = "postgresql://"+DB_USER+":"+DB_PASSWORD+"@"+DB_SERVER+"/proj1part2"
+DATABASEURI = "postgresql://ccr2157:ccr2157@w4111.cisxo09blonu.us-east-1.rds.amazonaws.com/w4111"
 
 engine = create_engine(DATABASEURI)
 
-
-
-@app.route('/tables')
-def list_tables():
+@app.route('/topics')
+def view_topics():
     with engine.connect() as connection:
-        # Query to list tables owned by ah4100
-        result = connection.execute(text("""
-            SELECT tablename 
-            FROM pg_catalog.pg_tables 
-            WHERE tableowner = 'ah4100'
-        """))
-        tables = [row['tablename'] for row in result]
-
-    return render_template('tables.html', tables=tables)
+        # Query to retrieve topic names from the 'topic' table
+        result = connection.execute(text("SELECT topic_name FROM ccr2157.topic"))
+        
+        # Extract topic names from the result
+        topics = [row[0] for row in result]
+    
+        return render_template('topics.html', topics=topics)
 
 @app.route('/')
 def home():
