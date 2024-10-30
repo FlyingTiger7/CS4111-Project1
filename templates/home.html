@@ -8,6 +8,11 @@
 <body>
     <h1>Welcome to the Home Page!</h1>
     <p>This is a simple Flask web application.</p>
+    
+    <!-- Link to About Page -->
     <a href="/about">Go to About Page</a>
+    
+    <!-- Link to Tables Page -->
+    <a href="{{ url_for('list_tables') }}">View Your Tables</a>
 </body>
 </html>
