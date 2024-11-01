@@ -21,6 +21,11 @@ engine = create_engine(DATABASEURI)
 def before_request():
     # Open a database connection at the start of each request
     g.conn = engine.connect()
+    result = g.conn.execute(text("SELECT topic_name FROM ccr2157.topic"))
+
+        
+        # Extract topic names from the result
+    g.topics = [row[0] for row in result]
 
 @app.teardown_request
 def teardown_request(exception):
@@ -31,20 +36,22 @@ def teardown_request(exception):
     except Exception as e:
         print(f"Error closing connection: {e}")
 
-@app.route('/topics')
-def view_topics():
-    with engine.connect() as connection:
-        # Query to retrieve topic names from the 'topic' table
-        result = connection.execute(text("SELECT topic_name FROM ccr2157.topic"))
-        
-        # Extract topic names from the result
-        topics = [row[0] for row in result]
-    
-        return render_template('topics.html', topics=topics)
+@app.route('/topic/<topic_name>')
+def view_topic(topic_name):
+    result = g.conn.execute(
+        text("SELECT topic_name FROM ccr2157.topic WHERE topic_name = :name"),
+        {"name": topic_name}
+    )
+    topic = result.fetchone()
+
+    if topic is None:
+        return "Topic not found", 404
+
+    return render_template('topic.html', topic=topic)
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template('home.html', topics=g.topics)
 
 if __name__ == '__main__':
     app.run(debug=True)
