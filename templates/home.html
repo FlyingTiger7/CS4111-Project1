@@ -7,6 +7,17 @@
 <p>This is a simple Flask web application where you can explore different topics.</p>
 
 <!-- Additional content for the home page can go here -->
-
+<h2>Top Threads</h2>
+    <ul>
+        {% for thread in top_threads %}
+            <li>
+                <h3>{{ thread.title }}</h3>
+                <p>{{ thread.body }}</p>
+                <p><strong>Likes:</strong> {{ thread.like_count }}</p>
+                <p><strong>Posted by:</strong> {{ thread.email }}</p>
+                <p><strong>Timestamp:</strong> {{ thread.timestamp }}</p>
+            </li>
+        {% endfor %}
+    </ul>
 
 {% endblock %}

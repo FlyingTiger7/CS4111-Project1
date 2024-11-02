@@ -47,11 +47,28 @@ def view_topic(topic_name):
     if topic is None:
         return "Topic not found", 404
 
-    return render_template('topic.html', topic=topic)
+    return render_template('topic.html', topic=topic,topics=g.topics)
 
 @app.route('/')
 def home():
-    return render_template('home.html', topics=g.topics)
+      
+    result = g.conn.execute(text("""
+        WITH top_liked_comment AS (
+      SELECT r.thread_id AS thread_id, COUNT(*) AS like_count
+      FROM ccr2157.reply r
+      JOIN ccr2157.likes_has lh ON lh.comment_id = r.comment_id
+      GROUP BY r.thread_id
+      ORDER BY like_count DESC
+      LIMIT 3
+        )
+        SELECT tlc.like_count, thread.title, thread.body, thread.timestamp, creates.email
+        FROM top_liked_comment tlc
+        JOIN ccr2157.thread thread ON tlc.thread_id = thread.thread_id
+        JOIN ccr2157.creates creates ON creates.thread_id = tlc.thread_id;
+        """))
+    top_threads = result.fetchall()  # Fetch all top threads
+
+    return render_template('home.html', topics=g.topics,top_threads=top_threads)
 
 if __name__ == '__main__':
     app.run(debug=True)

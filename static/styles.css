@@ -1,0 +1,95 @@
+/* General Page Styling */
+body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #2c3e50; /* Dark grey-blue */
+    background-color: #f4f4f9; /* Soft light grey */
+}
+
+/* Header Styling */
+header {
+    background-color: #1a1a2e; /* Dark navy blue */
+    padding: 20px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+header h1 {
+    color: #f4f4f9; /* Soft light grey */
+    text-align: center;
+    font-size: 2em;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+/* Navigation Styling */
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: #1191b1; /* Light grey */
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.1em;
+    padding-bottom: 5px;
+    border-bottom: 2px solid transparent;
+    transition: border-bottom 0.3s ease;
+}
+
+nav ul li a:hover, nav ul li a:focus {
+    border-bottom: 2px solid #3498db; /* Subtle blue underline */
+}
+
+/* Main Content Styling */
+main {
+    padding: 40px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+h2 {
+    color: #1a1a2e;
+    font-size: 1.8em;
+    border-bottom: 2px solid #3498db; /* Blue underline */
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+}
+
+/* Card Style for List Items */
+ul li {
+    list-style: none;
+    margin: 15px 0;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+ul li h3 {
+    color: #2c3e50; /* Dark grey-blue */
+    margin: 0 0 10px;
+}
+
+ul li p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+/* Footer (if you want to add one) */
+footer {
+    text-align: center;
+    padding: 15px;
+    font-size: 0.9em;
+    color: #95a5a6; /* Muted grey */
+    background-color: #f4f4f9;
+    border-top: 1px solid #ddd;
+}
