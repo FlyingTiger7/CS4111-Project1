@@ -47,6 +47,12 @@ def view_topic(topic_name):
     if topic is None:
         return "Topic not found", 404
 
+    result = g.conn.execute(
+        text("SELECT topic_name FROM ccr2157.topic WHERE topic_name = :name"),
+        {"name": topic_name}
+    )
+
+
     return render_template('topic.html', topic=topic,topics=g.topics)
 
 @app.route('/')
