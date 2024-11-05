@@ -48,12 +48,23 @@ def view_topic(topic_name):
         return "Topic not found", 404
 
     result = g.conn.execute(
-        text("SELECT topic_name FROM ccr2157.topic WHERE topic_name = :name"),
-        {"name": topic_name}
-    )
+        text(""" SELECT title,body,timestamp,email,like_count from ccr2157.part_of pf 
+                 join ccr2157.thread thread on thread.thread_id = pf.thread_id
+                 join ccr2157.topic topic on pf.topic_id = topic.topic_id
+                 join ccr2157.creates creates on creates.thread_id = thread.thread_id
+                 join (SELECT r.thread_id AS thread_id, COUNT(*) AS like_count
+                      FROM ccr2157.reply r
+                      JOIN ccr2157.likes_has lh ON lh.comment_id = r.comment_id
+                      GROUP BY r.thread_id) as thread_like_count 
+                 ON thread_like_count.thread_id = thread.thread_id
 
+                 WHERE topic.topic_name = :name"""),
+                 {"name": topic_name}
+            )   
+        
+    topic_threads = result.fetchall()
 
-    return render_template('topic.html', topic=topic,topics=g.topics)
+    return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name)
 
 @app.route('/')
 def home():

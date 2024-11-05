@@ -3,11 +3,18 @@
 {% block title %}Home Page{% endblock %}
 
 {% block content %}
-    {% for topic in topic %}
-    {{ topic }} is the topic you are looking 
-    {% endfor %}
 
-
-
-
+<!-- Additional content for the topic page can go here -->
+<h2>Top Threads in {{ topic_name }}</h2>
+    <ul>
+        {% for thread in topic_threads %}
+            <li>
+                <h3>{{ thread.title }}</h3>
+                <p>{{ thread.body }}</p>
+                <p><strong>Likes:</strong> {{ thread.like_count }}</p>
+                <p><strong>Posted by:</strong> {{ thread.email }}</p>
+                <p><strong>Timestamp:</strong> {{ thread.timestamp }}</p>
+            </li>
+        {% endfor %}
+    </ul>
 {% endblock %}
