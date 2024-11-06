@@ -70,6 +70,16 @@ def view_topic(topic_name):
 
     return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name)
 
+@app.route('/topic/<topic_name>/thread/<thread_title>')
+def view_thread(thread_title,topic_name):
+
+    return render_template("thread.html",thread_title = thread_title,tp=topic_name,topics=g.topics)
+    
+
+
+
+
+
 @app.route('/')
 def home():
       

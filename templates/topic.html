@@ -10,7 +10,8 @@
     <ul>
         {% for thread in topic_threads %}
             <li>
-                <h3>{{ thread.title }}</h3>
+                <h3><a href="{{ url_for('view_thread', thread_title=thread.title,
+                topic_name=topic_name) }}">{{ thread.title }}</a></h3>
                 <p>{{ thread.body }}</p>
                 <p><strong>Likes:</strong> {{ thread.like_count }}</p>
                 <p><strong>Posted by:</strong> {{ thread.email }}</p>
