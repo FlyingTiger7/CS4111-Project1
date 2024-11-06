@@ -6,6 +6,7 @@
 
 <!-- Additional content for the topic page can go here -->
 <h2>Top Threads in {{ topic_name }}</h2>
+    {{ default_message }}
     <ul>
         {% for thread in topic_threads %}
             <li>
