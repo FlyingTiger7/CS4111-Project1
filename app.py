@@ -5,7 +5,7 @@ from flask import Flask, request, render_template, g, redirect, Response
 
 app = Flask(__name__)
 
-#test commit
+#test commit final for Christian Robin Github check test
 
 DB_USER = "ccr2157"
 DB_PASSWORD = "ccr2157"
