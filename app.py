@@ -5,7 +5,7 @@ from flask import Flask, request, render_template, g, redirect, Response
 
 app = Flask(__name__)
 
-#test commit final for Christian Robin Github check test v8
+#test commit final for Christian Robin Github check test v2
 
 DB_USER = "ccr2157"
 DB_PASSWORD = "ccr2157"
@@ -36,6 +36,10 @@ def teardown_request(exception):
             g.conn.close()
     except Exception as e:
         print(f"Error closing connection: {e}")
+
+
+#@app.route('/login')
+#def login()
 
 @app.route('/topic/<topic_name>')
 def view_topic(topic_name):
