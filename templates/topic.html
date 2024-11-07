@@ -6,7 +6,6 @@
 
 <!-- Additional content for the topic page can go here -->
 <h2>Top Threads in {{ topic_name }}</h2>
-    {{ default_message }}
     <ul>
         {% for thread in topic_threads %}
             <li>
@@ -17,6 +16,10 @@
                 <p><strong>Posted by:</strong> {{ thread.email }}</p>
                 <p><strong>Timestamp:</strong> {{ thread.timestamp }}</p>
             </li>
+        {% else %}
+        There are currently no threads for this topic, please consider making your own
+
+            
         {% endfor %}
     </ul>
 {% endblock %}

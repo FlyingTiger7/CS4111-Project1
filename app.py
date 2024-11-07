@@ -63,11 +63,7 @@ def view_topic(topic_name):
             )   
         
     topic_threads = result.fetchall()
-
-    if len(topic_threads) == 0:
-        default_message = "There are currently no threads for this topic, please consider making your own"
-        return render_template('topic.html',topics=g.topics,topic_name=topic_name,default_message=default_message)
-
+    
     return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name)
 
 @app.route('/topic/<topic_name>/thread/<thread_title>')
