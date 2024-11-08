@@ -45,7 +45,13 @@
                 topic_name=topic_name) }}">{{ thread.title }}</a></h3>
                 <p>{{ thread.body }}</p>
                 <p><strong>Likes:</strong> {{ thread.like_count }}</p>
-                <p><strong>Posted by:</strong> {{ thread.email }}</p>
+                <p style="display: inline; margin: 0;"><strong>Posted by:</strong> {{ thread.email }}
+                <form action="{{ url_for('follow', followed_email=thread.email) }}" method="post" class="null">
+                    <button type="submit" style="background-color: #007BFF;">
+                        +
+                    </button>
+                </form>
+                </p>
                 <p><strong>Timestamp:</strong> {{ thread.timestamp }}</p>
             </li>
         {% else %}

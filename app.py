@@ -247,6 +247,13 @@ def subscribe_to_topic(topic_name):
     return redirect(request.referrer)
 
 
+###follow/following
+@app.route('/follow/<string:followed_email>', methods=['POST'])
+@login_required
+def follow(followed_email):
+    print(followed_email)
+
+    return redirect(request.referrer)
 
 if __name__ == '__main__':
     app.run(debug=True)

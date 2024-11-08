@@ -56,46 +56,11 @@ main {
 }
 
 /* Form Styling */
-form {
-    background-color: #ffffff;
-    padding: 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    max-width: 500px;
-    margin: 20px auto;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
 
-form label {
-    font-size: 0.9em;
-    color: #666;
-}
 
-form input[type="text"],
-form textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 1em;
-    background-color: #fafafa;
-}
 
-form button {
-    background-color: #007BFF;
-    color: #ffffff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
 
-form button:hover {
-    background-color: #0056b3;
-}
+
 
 /* Minimalist Card Style for List Items */
 ul li {
