@@ -7,7 +7,13 @@
 <p>This is a simple Flask web application where you can explore different topics.</p>
 
 <!-- Additional content for the home page can go here -->
+
+{% if current_user.is_authenticated %}
+<h2>Hottest Threads and Events: Your Topics </h2>
+{% else %}
 <h2>Hot Threads on Fitdit</h2>
+{% endif %}
+
     <ul>
         {% for thread in top_threads %}
             <li>
@@ -19,5 +25,7 @@
             </li>
         {% endfor %}
     </ul>
+
+
 
 {% endblock %}

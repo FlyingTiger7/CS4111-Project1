@@ -156,21 +156,42 @@ def view_thread(thread_title,topic_name):
 @app.route('/')
 @app.route('/home')
 def home():
-      
-    result = g.conn.execute(text("""
+
+    if current_user.is_authenticated:
+        result = g.conn.execute(text("""
+        WITH top_liked_threads AS (select thread_id, count(*) like_count from ccr2157.likes_has lh 
+                join ccr2157.comment comment ON lh.comment_id = comment.comment_id
+        join ccr2157.reply reply ON comment.comment_id = reply.comment_id
+        GROUP BY reply.thread_id)
+
+        Select tls.like_count,title,body,timestamp,creates.email
+        FROM ccr2157.subscribe sub JOIN ccr2157.part_of ON sub.topic_id = part_of.topic_id
+        JOIN top_liked_threads tls ON part_of.thread_id = tls.thread_id
+        JOIN ccr2157.thread thread ON thread.thread_id = tls.thread_id
+        JOIN ccr2157.creates creates on creates.thread_id = tls.thread_id 
+        WHERE sub.email = :email
+        ORDER BY like_count DESC
+        LIMIT 3"""),
+        {"email": current_user.get_id()})
+  
+
+
+    else: 
+        result = g.conn.execute(text("""
         WITH top_liked_comment AS (
-      SELECT r.thread_id AS thread_id, COUNT(*) AS like_count
-      FROM ccr2157.reply r
-      JOIN ccr2157.likes_has lh ON lh.comment_id = r.comment_id
-      GROUP BY r.thread_id
-      ORDER BY like_count DESC
-      LIMIT 3
+        SELECT r.thread_id AS thread_id, COUNT(*) AS like_count
+        FROM ccr2157.reply r
+        JOIN ccr2157.likes_has lh ON lh.comment_id = r.comment_id
+        GROUP BY r.thread_id
+        ORDER BY like_count DESC
+        LIMIT 3
         )
         SELECT tlc.like_count, thread.title, thread.body, thread.timestamp, creates.email
         FROM top_liked_comment tlc
         JOIN ccr2157.thread thread ON tlc.thread_id = thread.thread_id
         JOIN ccr2157.creates creates ON creates.thread_id = tlc.thread_id;
         """))
+    
     top_threads = result.fetchall()  # Fetch all top threads
 
     return render_template('home.html', topics=g.topics,top_threads=top_threads)
