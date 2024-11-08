@@ -1,13 +1,16 @@
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, flash, request, render_template, g, redirect, Response, url_for
+from flask import Flask, flash, request, render_template, g, redirect, Response, url_for,session
 from werkzeug.security import check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
-app = Flask(__name__)
+# secret_key below is needed for login authentication, blackbox under the covers done by flask
 
-#test commit final for Christian Robin Github check test v20
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+
+### database credentials
 
 DB_USER = "ccr2157"
 DB_PASSWORD = "ccr2157"
@@ -23,16 +26,19 @@ class User(UserMixin):
     def __init__(self, email):
         self.email = email
 
+    def get_id(self):
+        return str(self.email)
+
 @login_manager.user_loader
-def load_user(user_id):
-    # Query to load user based on user_id
+def load_user(email):
+    # Query to load user based on email
     result = g.conn.execute(
-        text("SELECT user_id, email FROM user WHERE user_id = :user_id"),
-        {"user_id": user_id}
+        text("SELECT email FROM ccr2157.app_user WHERE email = :email"),
+        {"email": email}
     )
     user_row = result.fetchone()
     if user_row:
-        return User(user_row.user_id, user_row.email)
+        return User(user_row.email)
     return None     
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -41,26 +47,32 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
+        session.pop('_flashes', None)
+
+
         # Query the database for the user's credentials
         result = g.conn.execute(
             text("SELECT email, password FROM ccr2157.app_user WHERE email = :email"),
             {"email": email}
         )
-        user_row = result.fetchall()
+    
+        user_row = result.fetchone()
 
-        if user_row and user_row.password == password:
-            user = User(user_row.user_id, user_row.email)
+        if user_row and user_row[1] == password:
+            user = User(user_row[0])
             login_user(user)
-            flash('Logged in successfully.')
-            return redirect(url_for('dashboard'))  # Redirect to dashboard or home page
+            flash('Logged in successfully.', 'success')
+            return redirect(url_for('home'))  # Redirect to dashboard or home page
         else:
-            flash('Invalid email or password.')
-
-        # Verify password
-
+            flash('Invalid email or password.', 'error')
 
     return render_template('login.html',topics =g.topics)
 
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash("You have been logged out.", 'info')
+    return redirect(url_for('home'))
 
 @app.before_request
 def before_request():
@@ -123,8 +135,9 @@ def view_thread(thread_title,topic_name):
 
 
 
-
+#/ and home will both route to the same default page/main page
 @app.route('/')
+@app.route('/home')
 def home():
       
     result = g.conn.execute(text("""
