@@ -5,7 +5,39 @@
 {% block content %}
 
 <!-- Additional content for the topic page can go here -->
-<h2>Top Threads in {{ topic_name }}</h2>
+
+<div style="display: flex; align-items: center;">
+    <h2 style="margin: 0; margin-right: 10px;">Top threads in {{ topic_name }}</h2>
+
+    <!-- Subscribe Button -->
+    
+    <form action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
+    {% if is_subscribed %}    
+
+        <button type="submit" style="background-color: #6a0dad; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+        Subscribed
+        </button>
+    {% else %}
+        <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+        Subscribe
+        </button>
+
+    {% endif %}
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+</div>
     <ul>
         {% for thread in topic_threads %}
             <li>

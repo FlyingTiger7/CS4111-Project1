@@ -18,7 +18,7 @@ DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.comw/w4111"
 DATABASEURI = "postgresql://ccr2157:ccr2157@w4111.cisxo09blonu.us-east-1.rds.amazonaws.com/w4111"
 
 engine = create_engine(DATABASEURI)
-
+##OUR LOGIN ENGINE - keeps track of user that is logged in and makes a huge difference in terms of functionality.######################################################################################################
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -73,7 +73,7 @@ def logout():
     logout_user()
     flash("You have been logged out.", 'info')
     return redirect(url_for('home'))
-
+#########################################################################################################################################
 @app.before_request
 def before_request():
 
@@ -94,6 +94,8 @@ def teardown_request(exception):
     except Exception as e:
         print(f"Error closing connection: {e}")
 
+
+### dynamically renders all threads associated with said topic
 @app.route('/topic/<topic_name>')
 def view_topic(topic_name):
     result = g.conn.execute(
@@ -121,8 +123,23 @@ def view_topic(topic_name):
             )   
         
     topic_threads = result.fetchall()
+
+    is_subscribed = False
+
+    if current_user.is_authenticated:
+        result = g.conn.execute(
+        text("SELECT topic_id FROM ccr2157.topic WHERE topic_name = :topic_name"),
+        {"topic_name": topic_name}
+        )
+        topic = result.fetchone()
+
+        subscription = g.conn.execute(
+            text("SELECT 1 FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
+            {"email": current_user.get_id(), "topic_id": topic[0]}
+        ).fetchone()
+        is_subscribed = subscription is not None
     
-    return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name)
+    return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name,is_subscribed=is_subscribed)
 
 @app.route('/topic/<topic_name>/thread/<thread_title>')
 def view_thread(thread_title,topic_name):
@@ -159,6 +176,54 @@ def home():
     return render_template('home.html', topics=g.topics,top_threads=top_threads)
 
 
+
+
+
+#### handling subcriptions to topics
+@app.route('/subscribe/<string:topic_name>', methods=['POST'])
+@login_required
+def subscribe_to_topic(topic_name):
+    # Retrieve the topic_id based on the topic_name
+    result = g.conn.execute(
+        text("SELECT topic_id FROM ccr2157.topic WHERE topic_name = :topic_name"),
+        {"topic_name": topic_name}
+    )
+    topic = result.fetchone()
+
+    if topic:
+        topic_id = topic[0]
+        # Insert the subscription record into the subscriptions table 
+
+        existing_subscription = g.conn.execute(
+            text("SELECT * FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
+            {"email": current_user.get_id(), "topic_id": topic_id}
+        ).fetchone()
+        
+        is_subscribed = existing_subscription is not None
+
+        if existing_subscription:
+            # User is already subscribed
+            g.conn.execute(
+            text("DELETE FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
+            {"email": current_user.get_id(), "topic_id": topic_id}
+            )
+
+            g.conn.commit() 
+
+            flash("You have unsubscribed from this topic.")
+
+        else:
+            g.conn.execute(
+                text("INSERT INTO ccr2157.subscribe (email, topic_id) VALUES (:user_id, :topic_id)"),
+                {"user_id": current_user.get_id(), "topic_id": topic_id})
+            g.conn.commit() 
+        
+            flash(f"You have subscribed to {topic_name}")
+    else:
+        flash("Topic not found.")
+
+    # Redirect back to the topic page
+    return redirect(request.referrer)
 
 
 

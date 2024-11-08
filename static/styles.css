@@ -170,3 +170,17 @@ ul li p {
 .login-container button:hover {
     background-color: #0056b3;
 }
+
+.subscribe-form {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.subscribe-form {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
