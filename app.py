@@ -7,7 +7,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 
 app = Flask(__name__)
 
-#test commit final for Christian Robin Github check test v2
+#test commit final for Christian Robin Github check test v20
 
 DB_USER = "ccr2157"
 DB_PASSWORD = "ccr2157"
