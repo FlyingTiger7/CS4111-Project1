@@ -1,7 +1,9 @@
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, flash, request, render_template, g, redirect, Response, url_for
+from werkzeug.security import check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
 app = Flask(__name__)
 
@@ -9,17 +11,60 @@ app = Flask(__name__)
 
 DB_USER = "ccr2157"
 DB_PASSWORD = "ccr2157"
-
 DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.comw/w4111"
-
 DATABASEURI = "postgresql://ccr2157:ccr2157@w4111.cisxo09blonu.us-east-1.rds.amazonaws.com/w4111"
 
 engine = create_engine(DATABASEURI)
 
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, email):
+        self.email = email
+
+@login_manager.user_loader
+def load_user(user_id):
+    # Query to load user based on user_id
+    result = g.conn.execute(
+        text("SELECT user_id, email FROM user WHERE user_id = :user_id"),
+        {"user_id": user_id}
+    )
+    user_row = result.fetchone()
+    if user_row:
+        return User(user_row.user_id, user_row.email)
+    return None     
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        # Query the database for the user's credentials
+        result = g.conn.execute(
+            text("SELECT email, password FROM ccr2157.app_user WHERE email = :email"),
+            {"email": email}
+        )
+        user_row = result.fetchall()
+
+        if user_row and user_row.password == password:
+            user = User(user_row.user_id, user_row.email)
+            login_user(user)
+            flash('Logged in successfully.')
+            return redirect(url_for('dashboard'))  # Redirect to dashboard or home page
+        else:
+            flash('Invalid email or password.')
+
+        # Verify password
+
+
+    return render_template('login.html',topics =g.topics)
 
 
 @app.before_request
 def before_request():
+
     # Open a database connection at the start of each request
     g.conn = engine.connect()
     result = g.conn.execute(text("SELECT topic_name FROM ccr2157.topic"))
@@ -36,10 +81,6 @@ def teardown_request(exception):
             g.conn.close()
     except Exception as e:
         print(f"Error closing connection: {e}")
-
-
-#@app.route('/login')
-#def login()
 
 @app.route('/topic/<topic_name>')
 def view_topic(topic_name):
@@ -74,6 +115,8 @@ def view_topic(topic_name):
 @app.route('/topic/<topic_name>/thread/<thread_title>')
 def view_thread(thread_title,topic_name):
 
+    result = g.conn.execute("Select * from ccr2157.thread thread where thread.title = thread_title")
+
     return render_template("thread.html",thread_title = thread_title,tp=topic_name,topics=g.topics)
     
 
@@ -101,6 +144,10 @@ def home():
     top_threads = result.fetchall()  # Fetch all top threads
 
     return render_template('home.html', topics=g.topics,top_threads=top_threads)
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
