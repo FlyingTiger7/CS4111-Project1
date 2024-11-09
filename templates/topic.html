@@ -46,7 +46,7 @@
                 <p>{{ thread.body }}</p>
                 <p><strong>Likes:</strong> {{ thread.like_count }}</p>
                 <p style="display: inline; margin: 0;"><strong>Posted by:</strong> {{ thread.email }}
-                <form action="{{ url_for('follow', followed_email=thread.email) }}" method="post" class="null">
+                <form action="{{ url_for('follow', followed_email=thread.email) }}" method="post" class="">
                     <button type="submit" style="background-color: #007BFF;">
                         +
                     </button>

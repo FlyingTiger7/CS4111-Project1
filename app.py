@@ -251,7 +251,21 @@ def subscribe_to_topic(topic_name):
 @app.route('/follow/<string:followed_email>', methods=['POST'])
 @login_required
 def follow(followed_email):
-    print(followed_email)
+    
+    follow_status = g.conn.execute(
+            text("SELECT * FROM ccr2157.follow WHERE follower_email = :user_email AND followed_email =:followed_email"),
+            {"user_email": current_user.get_id(), "followed_email": followed_email}
+        ).fetchone()
+    
+    if follow_status is None:
+        g.conn.execute(
+                text("INSERT INTO ccr2157.follow (follower_email, followed_email) VALUES (:user_email, :followed_email)"),
+                {"user_email": current_user.get_id(), "followed_email": followed_email})
+        g.conn.commit() 
+        #### issue not flashing properly flash("You are now following {followed_email}")
+
+    else:
+        flash("You already follow (followed_email)")
 
     return redirect(request.referrer)
 
