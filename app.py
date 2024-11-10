@@ -259,13 +259,16 @@ def follow(followed_email):
     
     if follow_status is None:
         g.conn.execute(
-                text("INSERT INTO ccr2157.follow (follower_email, followed_email) VALUES (:user_email, :followed_email)"),
+                text("INSERT INTO ccr2157.follow(follower_email, followed_email) VALUES (:user_email, :followed_email)"),
                 {"user_email": current_user.get_id(), "followed_email": followed_email})
         g.conn.commit() 
         #### issue not flashing properly flash("You are now following {followed_email}")
 
     else:
-        flash("You already follow (followed_email)")
+        g.conn.execute(
+                text("DELETE FROM ccr2157.follow WHERE follower_email = :user_email and followed_email = :followed_email"),
+                {"user_email": current_user.get_id(), "followed_email": followed_email})
+        g.conn.commit() 
 
     return redirect(request.referrer)
 
