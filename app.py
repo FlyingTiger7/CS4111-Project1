@@ -85,6 +85,13 @@ def before_request():
         # Extract topic names from the result
     g.topics = [row[0] for row in result]
 
+    if current_user.is_authenticated:
+        result = g.conn.execute(text("SELECT sub.followed_email FROM ccr2157.follow sub WHERE sub.follower_email =:email"),{"email":current_user.get_id()})
+    g.followers = [row[0] for row in result]
+    print(g.followers)
+    
+
+
 @app.teardown_request
 def teardown_request(exception):
     # Close the database connection at the end of each request
@@ -139,7 +146,7 @@ def view_topic(topic_name):
         ).fetchone()
         is_subscribed = subscription is not None
     
-    return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name,is_subscribed=is_subscribed)
+    return render_template('topic.html', topic_threads=topic_threads,topics=g.topics,topic_name=topic_name,is_subscribed=is_subscribed,followed=g.followers)
 
 @app.route('/topic/<topic_name>/thread/<thread_title>')
 def view_thread(thread_title,topic_name):
@@ -262,14 +269,14 @@ def follow(followed_email):
                 text("INSERT INTO ccr2157.follow(follower_email, followed_email) VALUES (:user_email, :followed_email)"),
                 {"user_email": current_user.get_id(), "followed_email": followed_email})
         g.conn.commit() 
-        #### issue not flashing properly flash("You are now following {followed_email}")
+        flash("You are now following:"+(followed_email))
 
     else:
         g.conn.execute(
                 text("DELETE FROM ccr2157.follow WHERE follower_email = :user_email and followed_email = :followed_email"),
                 {"user_email": current_user.get_id(), "followed_email": followed_email})
         g.conn.commit() 
-
+        flash("You have unfollowed:"+(followed_email))
     return redirect(request.referrer)
 
 if __name__ == '__main__':

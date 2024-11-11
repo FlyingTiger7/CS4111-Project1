@@ -150,3 +150,13 @@ ul li p {
     box-shadow: none;
 }
 
+.flash-message {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    opacity: 1;
+    animation: fadeOut 5s ease forwards;
+}
