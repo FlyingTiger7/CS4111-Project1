@@ -1,18 +1,85 @@
 {% extends 'base.html' %}
-
-{% block title %}{% endblock %}
-
+{% block title %}{{ thread.title }}{% endblock %}
 {% block content %}
 
-{{ thread_title }}
+<div class="thread-container">
+    <!-- Display flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
+    <!-- Thread content -->
+    <article class="thread">
+        <h1>{{ thread.title }}</h1>
+        <p class="thread-meta">Posted by {{ thread.author }} on {{ thread.timestamp }}</p>
+        <div class="thread-content">
+            {{ thread.body }}
+        </div>
+    </article>
 
+    {% for comment in comments %}
+    <div class="comment">
+        {{ comment.comment }}
+        <div class="comment-meta">
+            <span class="comment-author">{{ comment.commenter }}</span>
+            <span class="comment-date">{{ comment.timestamp }}</span>
+            {% if current_user.is_authenticated %}
+            <button 
+                class="like-button" 
+                data-comment-id="{{ comment.comment_id }}"
+                data-likes="{{ comment.like_count }}"
+            >
+                <span class="like-count">{{ comment.like_count }}</span> likes
+            </button>
+            {% else %}
+            <span class="like-count">{{ comment.like_count }} likes</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
 
-
-
-
-
-
-
+    {% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const likeButtons = document.querySelectorAll('.like-button');
+        
+        likeButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const commentId = this.dataset.commentId;
+                
+                try {
+                    const response = await fetch(`/like_comment/${commentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Update the like count display
+                        const likeCountSpan = this.querySelector('.like-count');
+                        likeCountSpan.textContent = data.likeCount;
+                        
+                        // Toggle button appearance based on action
+                        if (data.action === 'liked') {
+                            this.classList.add('liked');
+                        } else {
+                            this.classList.remove('liked');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    });
+    </script>
+    {% endblock %}
 
 {% endblock %}
