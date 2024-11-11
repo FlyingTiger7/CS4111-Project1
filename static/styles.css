@@ -55,47 +55,7 @@ main {
     margin: 0 auto;
 }
 
-/* Form Styling */
-form {
-    background-color: #ffffff;
-    padding: 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    max-width: 500px;
-    margin: 20px auto;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
 
-form label {
-    font-size: 0.9em;
-    color: #666;
-}
-
-form input[type="text"],
-form textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 1em;
-    background-color: #fafafa;
-}
-
-form button {
-    background-color: #007BFF;
-    color: #ffffff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-form button:hover {
-    background-color: #0056b3;
-}
 
 /* Minimalist Card Style for List Items */
 ul li {
@@ -375,14 +335,7 @@ ul li p {
     font-weight: 500;
 }
 
-.form-container {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+
 
 .form-group {
     margin-bottom: 1.5rem;
@@ -438,6 +391,15 @@ ul li p {
     transition: background-color 0.2s;
 }
 
+.button-subscribe {
+    background-color: #6a0dad; 
+    color: white; 
+    border: none; 
+    padding: 8px 16px; 
+    border-radius: 4px; 
+    cursor: pointer;
+}
+
 .button:hover {
     background-color: #0056b3;
 }
@@ -469,11 +431,12 @@ ul li p {
 
 
 .flash-message {
-    padding: 10px;
+    padding: 5px;
     margin: 5px 0;
     border-radius: 5px;
     color: white;
     font-weight: bold;
+    font-size: smaller;
     text-align: center;
     opacity: 1;
     animation: fadeOut 5s ease forwards;

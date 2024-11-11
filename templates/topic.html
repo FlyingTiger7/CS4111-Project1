@@ -6,24 +6,26 @@
 
 <!-- Additional content for the topic page can go here -->
 
-<div style="display: flex; align-items: center;">
-    <h2 style="margin: 0; margin-right: 10px;">Top threads in {{ topic_name }}</h2>
+<div style="display: flex; align-items: center;justify-content: space-between;">
+    <div style="display: flex;gap: 5px; flex-shrink: 0; ">
+        <h2 style="margin: 0; margin-right: 10px;">Top threads in {{ topic_name }}</h2>
 
-    <!-- Subscribe Button -->
-    
-    <form action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
-    {% if is_subscribed %}    
+        <!-- Subscribe Button -->
+        
+        <form action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
+        {% if is_subscribed %}    
 
-        <button type="submit" style="background-color: #6a0dad; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-        Subscribed
-        </button>
-    {% else %}
-        <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-        Subscribe
-        </button>
+            <button type="submit" class="button-subscribe">
+            Subscribed
+            </button>
+        {% else %}
+            <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            Subscribe
+            </button>
 
-    {% endif %}
-    </form>
+        {% endif %}
+        </form>
+    </div>
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
