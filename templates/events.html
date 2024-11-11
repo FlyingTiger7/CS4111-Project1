@@ -1,0 +1,29 @@
+<!-- events.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="events-container">
+    <h2>Events</h2>
+    
+    {% if current_user.is_authenticated %}
+    <div class="create-event-button">
+        <a href="{{ url_for('create_event') }}" class="button">Create New Event</a>
+    </div>
+    {% endif %}
+    
+    <div class="events-list">
+        {% for event in events %}
+        <div class="event-card">
+            <h3>{{ event.title }}</h3>
+            <p class="event-meta">
+                <span class="topic">Topic: {{ event.topic_name }}</span>
+                <span class="capacity">Capacity: {{ event.capacity }}</span>
+                <span class="creator">Created by: {{ event.creator_email }}</span>
+                <span class="date">Date: {{ event.timestamp }}</span>
+            </p>
+        </div>
+        {% else %}
+        <p>No events found.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
