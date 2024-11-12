@@ -152,6 +152,44 @@ def view_topic(topic_name):
         followed=g.followers
     )
 
+@app.route('/subscribe/<string:topic_name>', methods=['POST'])
+def subscribe(topic_name):
+    # Retrieve the topic_id based on the topic_name
+    result = g.conn.execute(
+        text("SELECT topic_id FROM ccr2157.topic WHERE topic_name = :topic_name"),
+        {"topic_name": topic_name}
+    )
+    topic = result.fetchone()
+    if topic:
+        topic_id = topic[0]
+        # Insert the subscription record into the subscriptions table 
+        existing_subscription = g.conn.execute(
+            text("SELECT * FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
+            {"email": current_user.get_id(), "topic_id": topic_id}
+        ).fetchone()
+        
+        is_subscribed = existing_subscription is not None
+        if existing_subscription:
+            # User is already subscribed
+            g.conn.execute(
+            text("DELETE FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
+            {"email": current_user.get_id(), "topic_id": topic_id}
+            )
+            g.conn.commit() 
+            flash("You have unsubscribed from this topic.")
+        else:
+            g.conn.execute(
+                text("INSERT INTO ccr2157.subscribe (email, topic_id) VALUES (:user_id, :topic_id)"),
+                {"user_id": current_user.get_id(), "topic_id": topic_id})
+            g.conn.commit() 
+        
+            flash(f"You have subscribed to {topic_name}")
+    else:
+        flash("Topic not found.")
+    # Redirect back to the topic page
+    return redirect(request.referrer)
+
+
 @app.route('/topic/<topic_name>/thread/<int:thread_id>', methods=['GET', 'POST'])
 def view_thread(topic_name, thread_id):
     if request.method == 'POST' and current_user.is_authenticated:
@@ -457,39 +495,6 @@ def home():
     
     top_threads = result.fetchall()
     return render_template('home.html', topics=g.topics, top_threads=top_threads)
-
-@app.route('/subscribe/<string:topic_name>', methods=['POST'])
-@login_required
-def subscribe_to_topic(topic_name):
-    result = g.conn.execute(
-        text("SELECT topic_id FROM ccr2157.topic WHERE topic_name = :topic_name"),
-        {"topic_name": topic_name}
-    )
-    topic = result.fetchone()
-
-    if topic:
-        topic_id = topic[0]
-        existing_subscription = g.conn.execute(
-            text("SELECT * FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
-            {"email": current_user.get_id(), "topic_id": topic_id}
-        ).fetchone()
-
-        if existing_subscription:
-            g.conn.execute(
-                text("DELETE FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
-                {"email": current_user.get_id(), "topic_id": topic_id}
-            )
-            flash("You have unsubscribed from this topic.")
-        else:
-            g.conn.execute(
-                text("INSERT INTO ccr2157.subscribe (email, topic_id) VALUES (:user_id, :topic_id)"),
-                {"user_id": current_user.get_id(), "topic_id": topic_id}
-            )
-            flash(f"You have subscribed to {topic_name}")
-    else:
-        flash("Topic not found.")
-
-    return redirect(request.referrer)
 
 @app.route('/follow/<string:followed_email>', methods=['POST'])
 @login_required

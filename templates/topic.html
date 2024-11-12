@@ -8,10 +8,10 @@
         <h2 style="margin: 0;">Top threads in {{ topic_name }}</h2>
         
         <!-- Subscribe Button -->
-        <form action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
+        <form action="{{ url_for('subscribe', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
             {% if is_subscribed %}    
                 <button type="submit" class="button-subscribe" style="background-color: #6a0dad; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                    Subscribed
+                    Unsubscribe
                 </button>
             {% else %}
                 <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
