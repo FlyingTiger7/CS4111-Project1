@@ -19,6 +19,11 @@
                 </button>
             {% endif %}
         </form>
+        <form action="{{url_for('create_thread',topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
+            <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                Create Thread
+            </button>
+        </form>
     </div>
 </div>
 
