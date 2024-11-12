@@ -2,56 +2,34 @@
 {% block title %}{{ topic_name }} - Fitdit{% endblock %}
 {% block content %}
 
-<!-- Additional content for the topic page can go here -->
-
-<div style="display: flex; align-items: center;justify-content: space-between;">
-    <div style="display: flex;gap: 5px; flex-shrink: 0; ">
-        <h2 style="margin: 0; margin-right: 10px;">Top threads in {{ topic_name }}</h2>
-
-        <!-- Subscribe Button -->
+<!-- Topic Header and Subscribe Button -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <div style="display: flex; gap: 10px; flex-shrink: 0;">
+        <h2 style="margin: 0;">Top threads in {{ topic_name }}</h2>
         
+        <!-- Subscribe Button -->
         <form action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
-        {% if is_subscribed %}    
-
-            <button type="submit" class="button-subscribe">
-            Subscribed
-            </button>
-        {% else %}
-            <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-            Subscribe
-            </button>
-
-        {% endif %}
+            {% if is_subscribed %}    
+                <button type="submit" class="button-subscribe" style="background-color: #6a0dad; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    Subscribed
+                </button>
+            {% else %}
+                <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    Subscribe
+                </button>
+            {% endif %}
         </form>
     </div>
-<div class="topic-container">
-    <div class="topic-header">
-        <div class="topic-title-section">
-            <h1>{{ topic_name }}</h1>
-            
-            <div class="topic-actions">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('create_thread', topic_name=topic_name) }}" class="button">Create Thread</a>
-                    
-                    <form method="POST" action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" class="subscribe-form">
-                        <button type="submit" class="button-subscribe">
-                            {% if is_subscribed %}
-                                Unsubscribe
-                            {% else %}
-                                Subscribe
-                            {% endif %}
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+</div>
 
+<!-- Topic Container -->
+<div class="topic-container">
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <div class="flash-messages">
+            <div class="flash-messages" style="margin-bottom: 20px;">
                 {% for message in messages %}
-                    <div class="flash-message">
+                    <div class="flash-message" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -59,9 +37,10 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Threads Section -->
     <div class="thread-list">
         {% for thread in topic_threads %}
-            <div class="thread">
+            <div class="thread" style="border-bottom: 1px solid #e0e0e0; padding: 15px 0;">
                 <h3>
                     <a href="{{ url_for('view_thread', thread_id=thread.thread_id, topic_name=topic_name) }}">
                         {{ thread.title }}
@@ -72,12 +51,13 @@
                     {{ thread.body }}
                 </div>
                 
-                <div class="thread-meta">
+                <div class="thread-meta" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                     <span class="like-count">{{ thread.like_count }} likes</span>
                     <span class="author">Posted by: {{ thread.email }}</span>
+                    
                     {% if current_user.is_authenticated and thread.email != current_user.email %}
-                        <form method="POST" action="{{ url_for('follow', followed_email=thread.email) }}" class="follow-form">
-                            <button type="submit" class="button-follow">
+                        <form method="POST" action="{{ url_for('follow', followed_email=thread.email) }}" class="follow-form" style="margin: 0;">
+                            <button type="submit" class="button-follow" style="background-color: #007BFF; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
                                 {% if thread.email in followed %}
                                     Unfollow
                                 {% else %}
@@ -86,6 +66,7 @@
                             </button>
                         </form>
                     {% endif %}
+                    
                     <span class="timestamp">{{ thread.timestamp }}</span>
                 </div>
             </div>
