@@ -1,70 +1,76 @@
 {% extends 'base.html' %}
-
-{% block title %}Home Page{% endblock %}
-
+{% block title %}{{ topic_name }} - Fitdit{% endblock %}
 {% block content %}
 
-<!-- Additional content for the topic page can go here -->
-
-<div style="display: flex; align-items: center;">
-    <h2 style="margin: 0; margin-right: 10px;">Top threads in {{ topic_name }}</h2>
-
-    <!-- Subscribe Button -->
-    
-    <form action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
-    {% if is_subscribed %}    
-
-        <button type="submit" style="background-color: #6a0dad; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-        Subscribed
-        </button>
-    {% else %}
-        <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-        Subscribe
-        </button>
-
-    {% endif %}
-    </form>
+<div class="topic-container">
+    <div class="topic-header">
+        <div class="topic-title-section">
+            <h1>{{ topic_name }}</h1>
+            
+            <div class="topic-actions">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('create_thread', topic_name=topic_name) }}" class="button">Create Thread</a>
+                    
+                    <form method="POST" action="{{ url_for('subscribe_to_topic', topic_name=topic_name) }}" class="subscribe-form">
+                        <button type="submit" class="button-subscribe">
+                            {% if is_subscribed %}
+                                Unsubscribe
+                            {% else %}
+                                Subscribe
+                            {% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash-messages">
-                <ul>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
+                {% for message in messages %}
+                    <div class="flash-message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
-    
-</div>
-    <ul>
-        {% for thread in topic_threads %}
-            <li>
-                <h3><a href="{{ url_for('view_thread', thread_title=thread.title,
-                topic_name=topic_name) }}">{{ thread.title }}</a></h3>
-                <p>{{ thread.body }}</p>
-                <p><strong>Likes:</strong> {{ thread.like_count }}</p>
-                <p style="display: inline; margin: 0;">
-                    <strong>Posted by:</strong> {{ thread.email }}
-                    <form action="{{ url_for('follow', followed_email=thread.email) }}" method="post" style="display: inline; margin-left: 10px;">
-                        {% if thread.email in followed %}
-                        <button type="submit" style="background-color: #dde3e8; color: rgb(0, 0, 0); border: none; padding: 2px 5px; border-radius: 3px; cursor: pointer;">
-                            +
-                        </button>
-                        {% else %}
-                        <button type="submit" style="background-color: #8807dd; color: rgb(0, 0, 0); border: none; padding: 2px 5px; border-radius: 3px; cursor: pointer;">
-                            +
-                        </button>
-                        {% endif %}
-                    </form>
-                </p>
-                <p><strong>Timestamp:</strong> {{ thread.timestamp }}</p>
-            </li>
-        {% else %}
-        There are currently no threads for this topic, please consider making your own
 
-            
+    <div class="thread-list">
+        {% for thread in topic_threads %}
+            <div class="thread">
+                <h3>
+                    <a href="{{ url_for('view_thread', thread_id=thread.thread_id, topic_name=topic_name) }}">
+                        {{ thread.title }}
+                    </a>
+                </h3>
+                
+                <div class="thread-content">
+                    {{ thread.body }}
+                </div>
+                
+                <div class="thread-meta">
+                    <span class="like-count">{{ thread.like_count }} likes</span>
+                    <span class="author">Posted by: {{ thread.email }}</span>
+                    {% if current_user.is_authenticated and thread.email != current_user.email %}
+                        <form method="POST" action="{{ url_for('follow', followed_email=thread.email) }}" class="follow-form">
+                            <button type="submit" class="button-follow">
+                                {% if thread.email in followed %}
+                                    Unfollow
+                                {% else %}
+                                    Follow
+                                {% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
+                    <span class="timestamp">{{ thread.timestamp }}</span>
+                </div>
+            </div>
+        {% else %}
+            <p>There are currently no threads for this topic. {% if current_user.is_authenticated %}Why not create one?{% endif %}</p>
         {% endfor %}
-    </ul>
+    </div>
+</div>
+
 {% endblock %}

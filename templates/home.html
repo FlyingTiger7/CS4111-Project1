@@ -3,29 +3,49 @@
 {% block title %}Home Page{% endblock %}
 
 {% block content %}
-<h2>Welcome to the Home Page!</h2>
-<p>This is a simple Flask web application where you can explore different topics.</p>
+    <div class="home-container">
+        <section class="welcome">
+            <h1>Welcome to Fitdit</h1>
+            <p>Connect with fitness enthusiasts and share your journey to better health.</p>
+        </section>
 
-<!-- Additional content for the home page can go here -->
+        <section class="top-threads">
+            {% if current_user.is_authenticated %}
+                <h2>Hottest Threads from Your Topics</h2>
+            {% else %}
+                <h2>Hot Threads on Fitdit</h2>
+            {% endif %}
 
-{% if current_user.is_authenticated %}
-<h2>Hottest Threads and Events: Your Topics </h2>
-{% else %}
-<h2>Hot Threads on Fitdit</h2>
-{% endif %}
+            <div class="thread-list">
+                {% for thread in top_threads %}
+                    <article class="thread-card">
+                        <h3>{{ thread.title }}</h3>
+                        <div class="thread-content">
+                            {{ thread.body }}
+                        </div>
+                        <div class="thread-meta">
+                            <span class="like-count">
+                                <i class="icon-heart"></i> {{ thread.like_count }} likes
+                            </span>
+                            <span class="author">
+                                Posted by: {{ thread.email }}
+                            </span>
+                            <span class="timestamp">
+                                {{ thread.timestamp }}
+                            </span>
+                        </div>
+                    </article>
+                {% else %}
+                    <p class="no-threads">No threads found.</p>
+                {% endfor %}
+            </div>
+        </section>
 
-    <ul>
-        {% for thread in top_threads %}
-            <li>
-                <h3><a>{{ thread.title }}</a></h3>
-                <p>{{ thread.body }}</p>
-                <p><strong>Likes:</strong> {{ thread.like_count }}</p>
-                <p><strong>Posted by:</strong> {{ thread.email }}</p>
-                <p><strong>Timestamp:</strong> {{ thread.timestamp }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-
-
-
+        {% if current_user.is_authenticated %}
+            <section class="user-actions">
+                <a href="{{ url_for('view_events') }}" class="button">View Events</a>
+                <a href="{{ url_for('create_event') }}" class="button">Create Event</a>
+            </section>
+        {% endif %}
+    </div>
 {% endblock %}
