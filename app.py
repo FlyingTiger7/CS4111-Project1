@@ -21,21 +21,25 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 class User(UserMixin):
-    def __init__(self, email, privid):
+    def __init__(self, email, priv):
         self.email = email
+        self.priv = priv
+
+        
 
     def get_id(self):
         return str(self.email)
 
+
 @login_manager.user_loader
 def load_user(email):
     result = g.conn.execute(
-        text("SELECT email FROM ccr2157.app_user WHERE email = :email"),
+        text("SELECT email,privileges as priv FROM ccr2157.app_user WHERE email = :email"),
         {"email": email}
     )
     user_row = result.fetchone()
     if user_row:
-        return User(user_row.email)
+        return User(user_row.email,user_row.priv)
     return None     
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -281,18 +285,18 @@ def view_thread(topic_name, thread_id):
         topics=g.topics
     )
 
-@app.route('/topic/<topic_name>/thread/<int:thread_id>/<comment_id>/delete', methods=['POST'])
+@app.route('/thread/<int:thread_id>/<comment_id>/delete/<email>', methods=['POST'])
 def delete_comment(comment_id, thread_id, email):
 
-    if(current_user.privelidge == 1 or current_user.email == email):
+    if(current_user.priv == 1 or current_user.email == email):
         g.conn.execute(text("""DELETE FROM ccr2157.reply WHERE comment_id =:comment_id AND
-                            thread_id =: thread_id and email =: email"""),
+                            thread_id =:thread_id and email =:email"""),
                             {"comment_id": comment_id,
                             "thread_id": thread_id,
                             "email": email})
         g.conn.commit() 
 
-        g.conn.execute(text("DELETE FROM ccr2157.comments WHERE comment_id =:comment_id"),{"comment_id": comment_id})
+        g.conn.execute(text("DELETE FROM ccr2157.comment WHERE comment_id =:comment_id"),{"comment_id": comment_id})
         g.conn.commit()
 
         flash("Comment by "+email+" has been deleted")
@@ -303,13 +307,6 @@ def delete_comment(comment_id, thread_id, email):
     
     return redirect(request.referrer)
 
-
-
-
-
-        
-
-    
 
 @app.route('/like_comment/<int:comment_id>', methods=['POST'])
 @login_required
