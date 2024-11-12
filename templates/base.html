@@ -3,32 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My App{% endblock %}</title>
+    <title>{% block title %}Fitdit{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
 </head>
 <body>
     <header>
         <h1>Welcome to Fitdit</h1>
+        
         <div class="login-bar">
             {% if current_user.is_authenticated %}
-                <span>Welcome, {{ current_user.email }}!</span>
+                Welcome, {{ current_user.email }}! 
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>
             {% endif %}
         </div>
+
         <nav>
             <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('view_events') }}">Events</a></li>
+                {% endif %}
                 {% for topic in topics %}
-                <li><a href="{{ url_for('view_topic', topic_name=topic) }}">{{ topic }}</a></li>
+                    <li>
+                        <a href="{{ url_for('view_topic', topic_name=topic) }}">{{ topic }}</a>
+                    </li>
                 {% endfor %}
-               
             </ul>
         </nav>
     </header>
+
     <main>
+        <!-- Flash messages section -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {% if category %}alert-{{ category }}{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main content block -->
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Optional JavaScript block for pages that need it -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>
