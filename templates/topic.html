@@ -2,34 +2,30 @@
 {% block title %}{{ topic_name }} - Fitdit{% endblock %}
 {% block content %}
 
-<!-- Topic Header and Subscribe Button -->
-<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-    <div style="display: flex; gap: 10px; flex-shrink: 0;">
-        <h2 style="margin: 0;">Top threads in {{ topic_name }}</h2>
-        
-        <!-- Subscribe Button -->
-        <form action="{{ url_for('subscribe', topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
-            {% if is_subscribed %}    
-                <button type="submit" class="button-subscribe" style="background-color: #6a0dad; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                    Unsubscribe
-                </button>
-            {% else %}
-                <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                    Subscribe
-                </button>
-            {% endif %}
-        </form>
-        <form action="{{url_for('create_thread',topic_name=topic_name) }}" method="post" class="subscribe-form" style="margin: 0;">
-            <button type="submit" style="background-color: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                Create Thread
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- Topic Container -->
 <div class="topic-container">
-    <!-- Flash Messages -->
+    <!-- Header Section with Topic Title and Actions -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; flex-shrink: 0;">
+            <h2 style="margin: 0;">{{ topic_name }}</h2>
+            {% if current_user.is_authenticated %}
+                <form action="{{ url_for('subscribe', topic_name=topic_name) }}" method="post" style="display: inline;">
+                    <button type="submit" class="button-subscribe">
+                        {% if is_subscribed %}
+                            Unsubscribe
+                        {% else %}
+                            Subscribe
+                        {% endif %}
+                    </button>
+                </form>
+                <a href="{{ url_for('create_thread', topic_name=topic_name) }}" class="button">Create Thread</a>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{{ url_for('view_topic_events', topic_name=topic_name) }}" class="button">View Topic Events</a>
+        </div>
+    </div>
+
+    <!-- Flash Messages Section -->
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="flash-messages" style="margin-bottom: 20px;">
@@ -42,7 +38,7 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Threads Section -->
+    <!-- Threads List Section -->
     <div class="thread-list">
         {% for thread in topic_threads %}
             <div class="thread" style="border-bottom: 1px solid #e0e0e0; padding: 15px 0;">
@@ -61,8 +57,8 @@
                     <span class="author">Posted by: {{ thread.email }}</span>
                     
                     {% if current_user.is_authenticated and thread.email != current_user.email %}
-                        <form method="POST" action="{{ url_for('follow', followed_email=thread.email) }}" class="follow-form" style="margin: 0;">
-                            <button type="submit" class="button-follow" style="background-color: #007BFF; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        <form action="{{ url_for('follow', followed_email=thread.email) }}" method="post" class="follow-form">
+                            <button type="submit" class="button-follow">
                                 {% if thread.email in followed %}
                                     Unfollow
                                 {% else %}
@@ -76,7 +72,13 @@
                 </div>
             </div>
         {% else %}
-            <p>There are currently no threads for this topic. {% if current_user.is_authenticated %}Why not create one?{% endif %}</p>
+            <div class="no-threads">
+                <p>There are currently no threads for this topic. 
+                {% if current_user.is_authenticated %}
+                    Why not create one?
+                {% endif %}
+                </p>
+            </div>
         {% endfor %}
     </div>
 </div>
