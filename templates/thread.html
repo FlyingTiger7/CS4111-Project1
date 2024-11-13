@@ -36,7 +36,7 @@
                     <div class="comment-content">
                         {{ comment.comment }}
                     </div>
-                    <div class="comment-meta">
+                    <div class="comment-meta" style="display: flex; justify-content: flex-start; align-items: center; gap: 10px;">
                         <span class="comment-author">{{ comment.commenter }}</span>
                         <span class="comment-date">{{ comment.timestamp }}</span>
                         {% if current_user.is_authenticated %}
@@ -45,7 +45,7 @@
                             </button>
                             <form action="{{ url_for('delete_comment',thread_id=thread.thread_id,
                                             email=comment.commenter, comment_id=comment.comment_id) }}" method="post"> 
-                                <button type="submit" style="background-color: #007BFF; color: red; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                <button type="submit" style="background-color: #ff0000; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
                                     x
                                 </button>
                             </form>
