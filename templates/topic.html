@@ -41,36 +41,46 @@
         {% endif %}
     {% endwith %}
 
+
+
+
+
+
+    {% for thread in top_threads %}
+    <div class="event-card">
+        <div class="event-box" style="display: flex">
+            <h3 >{{ thread.title }}</h3>
+        </div>
+        <div style="margin-bottom: 10px;">
+            {{ thread.body }}
+        </div>
+        <div class="event-meta">
+            <span>Likes: {{ thread.like_count }}</span>
+            <span>Created by: {{ thread.email }}</span>
+            <span>Date: {{ thread.timestamp }}</span>
+        </div>
+    </div>
+    {% endfor %}
+
+
+
+
     <!-- Threads List Section -->
     <div class="thread-list">
         {% for thread in topic_threads %}
-            <div class="thread" style="border-bottom: 1px solid #e0e0e0; padding: 15px 0;">
+            <div class="event-card">
                 <h3>
-                    <a href="{{ url_for('view_thread', thread_id=thread.thread_id, topic_name=topic_name) }}">
+                    <a href="{{ url_for('view_thread', thread_id=thread.thread_id, topic_name=topic_name) }}" style="text-decoration: none; color: inherit;"
+                    onmouseover="this.style.color='#3498db';" onmouseout="this.style.color='inherit';">
                         {{ thread.title }}
                     </a>
                 </h3>
-                
-                <div class="thread-content">
+                <div style="margin-bottom: 10px;">
                     {{ thread.body }}
                 </div>
-                
-                <div class="thread-meta" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div class="event-meta">
                     <span class="like-count">{{ thread.like_count }} likes</span>
                     <span class="author">Posted by: {{ thread.email }}</span>
-                    
-                    {% if current_user.is_authenticated and thread.email != current_user.email %}
-                        <form action="{{ url_for('follow', followed_email=thread.email) }}" method="post" class="follow-form">
-                            <button type="submit" class="button-follow">
-                                {% if thread.email in followed %}
-                                    Unfollow
-                                {% else %}
-                                    Follow
-                                {% endif %}
-                            </button>
-                        </form>
-                    {% endif %}
-                    
                     <span class="timestamp">{{ thread.timestamp }}</span>
                 </div>
             </div>

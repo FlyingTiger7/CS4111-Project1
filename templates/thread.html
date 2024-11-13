@@ -4,6 +4,17 @@
 
 <div class="thread-container">
     <h1>{{ thread.title }}</h1>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-messages" style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <div class="flash-message" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
     
     <div class="thread-meta">
         <span class="author">Posted by {{ thread.author }}</span>
@@ -36,24 +47,39 @@
                     <div class="comment-content">
                         {{ comment.comment }}
                     </div>
-                    <div class="comment-meta" style="display: flex; justify-content: flex-start; align-items: center; gap: 10px;">
-                        <span class="comment-author">{{ comment.commenter }}</span>
-                        <span class="comment-date">{{ comment.timestamp }}</span>
-                        {% if current_user.is_authenticated %}
-                            <button class="like-button" data-comment-id="{{ comment.comment_id }}">
-                                <span class="like-count">{{ comment.like_count }}</span> likes
-                            </button>
-                            {% if current_user.priv == 1 or comment.commenter == current_user.email%}
-                            <form action="{{ url_for('delete_comment',thread_id=thread.thread_id,
-                                            email=comment.commenter, comment_id=comment.comment_id) }}" method="post"> 
-                                <button type="submit" style="background-color: #ff0000; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
-                                    x
+                    <div class="comment-meta" style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div>
+                            <span class="comment-author">{{ comment.commenter }}  
+                            {% if current_user.is_authenticated and comment.commenter != current_user.email %}
+                            <form action="{{ url_for('follow', followed_email=comment.commenter) }}" method="post" class="follow-form" style="display: inline; margin: 0; padding: 0;">
+                                <button type="submit" class="button-follow">
+                                    {% if comment.commenter in followed %}
+                                    Unfollow
+                                    {% else %}
+                                    follow
+                                    {% endif %}
                                 </button>
                             </form>
                             {% endif %}
-                        {% else %}
-                            <span class="like-count">{{ comment.like_count }} likes</span>
-                        {% endif %}
+                        </div>
+                        <div>
+                            <span class="comment-date">{{ comment.timestamp }}</span>
+                            {% if current_user.is_authenticated %}
+                                <button class="like-button" data-comment-id="{{ comment.comment_id }}">
+                                    <span class="like-count">{{ comment.like_count }}</span> likes
+                                </button>
+                                {% if current_user.priv == 1 or comment.commenter == current_user.email%}
+                                <form action="{{ url_for('delete_comment',thread_id=thread.thread_id,
+                                                email=comment.commenter, comment_id=comment.comment_id) }}" method="post" style="display: inline-block; padding: 0; margin: 0; width: auto;"> 
+                                    <button type="submit" style="background-color: #ff0000; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                                        x
+                                    </button>
+                                </form>
+                                {% endif %}
+                            {% else %}
+                                <span class="like-count">{{ comment.like_count }} likes</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             {% else %}

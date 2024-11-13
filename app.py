@@ -96,6 +96,8 @@ def before_request():
         )
         g.event_attendence = [row[0] for row in result]
 
+        print(g.followers)
+
     else:
         g.followers = []
         g.event_attendence = []
@@ -128,7 +130,7 @@ def view_topic(topic_name):
     result = g.conn.execute(
         text(""" 
             SELECT thread.thread_id, thread.title, thread.body, thread.timestamp, 
-                   creates.email, COALESCE(thread_like_count.like_count, 0) as like_count 
+                   creates.email as email, COALESCE(thread_like_count.like_count, 0) as like_count 
             FROM ccr2157.part_of pf 
             JOIN ccr2157.thread thread ON thread.thread_id = pf.thread_id
             JOIN ccr2157.topic topic ON pf.topic_id = topic.topic_id
@@ -167,7 +169,6 @@ def view_topic(topic_name):
         topics=g.topics,
         topic_name=topic_name,
         is_subscribed=is_subscribed,
-        followed=g.followers
     )
 
 @app.route('/subscribe/<string:topic_name>', methods=['POST'])
@@ -296,7 +297,9 @@ def view_thread(topic_name, thread_id):
         thread=thread,
         comments=comments,
         topic_name=topic_name,
-        topics=g.topics
+        topics=g.topics,
+        followed=g.followers
+        
     )
 
 @app.route('/thread/<int:thread_id>/<comment_id>/delete/<email>', methods=['POST'])
@@ -504,6 +507,26 @@ def home():
             LIMIT 3
         """),
         {"email": current_user.get_id()})
+
+        events = g.conn.execute(text("""SELECT e.event_id, e.title, e.capacity, e.timestamp,
+                   e.email as creator_email, t.topic_name, count(ea.event_id) as count
+            FROM ccr2157.event_created_by e
+            JOIN ccr2157.under u ON e.event_id = u.event_id 
+                AND e.email = u.app_user_email
+            JOIN ccr2157.topic t ON u.topic_id = t.topic_id
+            LEFT JOIN ccr2157.event_attendence ea ON ea.event_id = e.event_id
+            JOIN ccr2157.follow f ON e.email = f.followed_email
+            WHERE f.follower_email =:email
+            GROUP BY e.event_id, e.title, e.capacity, e.timestamp,
+                  creator_email, t.topic_name
+            ORDER BY count DESC
+            """),{"email":current_user.email}
+
+)
+
+
+
+
     else:
         result = g.conn.execute(text("""
             WITH top_liked_comment AS (
@@ -521,7 +544,13 @@ def home():
         """))
     
     top_threads = result.fetchall()
-    return render_template('home.html', topics=g.topics, top_threads=top_threads)
+    top_events = events.fetchall()
+    return render_template('home.html', 
+                           topics=g.topics, 
+                           top_threads=top_threads, 
+                           top_events=top_events,
+                           attend=g.event_attendence
+                           )
 
 @app.route('/follow/<string:followed_email>', methods=['POST'])
 @login_required
@@ -544,6 +573,7 @@ def follow(followed_email):
             {"user_email": current_user.get_id(), "followed_email": followed_email}
         )
         g.conn.commit()
+        print("followed work!")
         flash("You have unfollowed: " + followed_email)
     return redirect(request.referrer)
 

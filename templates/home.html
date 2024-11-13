@@ -9,43 +9,108 @@
             <p>Connect with fitness enthusiasts and share your journey to better health.</p>
         </section>
 
+
+        {% for thread in top_threads %}
+        <div class="event-card">
+            <div class="event-box" style="display: flex">
+                <h3 >{{ thread.title }}</h3>
+            </div>
+            <div style="margin-bottom: 10px;">
+                {{ thread.body }}
+            </div>
+            <div class="event-meta">
+                <span>Likes: {{ thread.like_count }}</span>
+                <span>Created by: {{ thread.email }}</span>
+                <span>Date: {{ thread.timestamp }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    
+
+
+        {% for event in events %}
+        <div class="event-card">
+            <div class="event-box" style="display: flex">
+                <h3 >{{ event.title }}</h3>
+                <form action="{{ url_for('attend_event',event_id=event.event_id) }}" method="post"> 
+                    {% if event.event_id in attend %}
+                    <button type="submit" style="background-color: #ff0000 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                        x
+                    </button>
+                    {% else %}
+                    <button type="submit" style="background-color: #34b233 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                        ✔ 
+                    </button>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="event-meta">
+                <span>Capacity: {{ event.event_attendence }}/{{ event.capacity }}</span>
+                <span>Created by: {{ event.creator_email }}</span>
+                <span>Date: {{ event.timestamp }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         <section class="top-threads">
             {% if current_user.is_authenticated %}
-                <h2>Hottest Threads from Your Topics</h2>
+                <h2>Popular Events Hosted by Your Followers </h2>
             {% else %}
-                <h2>Hot Threads on Fitdit</h2>
+                <h2>Popular events</h2>
             {% endif %}
 
-            <div class="thread-list">
-                {% for thread in top_threads %}
-                    <article class="thread-card">
-                        <h3>{{ thread.title }}</h3>
-                        <div class="thread-content">
-                            {{ thread.body }}
+            <div class="events-list">
+                {% for event in top_events %}
+                    <article class="event-card">
+                        <div class="event-box" style="display: flex">
+                            <h3 style="margin-right: 8px;">{{ event.title }}</h3>
+                            <form action="{{ url_for('attend_event',event_id=event.event_id) }}" method="post"> 
+                                {% if event.event_id in attend %}
+                                <button type="submit" style="background-color: #ff0000 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                                    x
+                                </button>
+                                {% else %}
+                                <button type="submit" style="background-color: #34b233 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                                    ✔ 
+                                </button>
+                                {% endif %}
+                            </form>
                         </div>
-                        <div class="thread-meta">
-                            <span class="like-count">
-                                <i class="icon-heart"></i> {{ thread.like_count }} likes
-                            </span>
-                            <span class="author">
-                                Posted by: {{ thread.email }}
-                            </span>
-                            <span class="timestamp">
-                                {{ thread.timestamp }}
-                            </span>
+                        <div class="event-meta">
+                            <span class="topic">Topic: {{ event.topic_name }}</span>
+                            <span class="capacity">Capacity:{{event.count}}/{{ event.capacity }}</span>
+                            <span class="creator">Created by: {{ event.creator_email }}</span>
+                            <span class="date">Date: {{ event.timestamp }}</span>
                         </div>
                     </article>
                 {% else %}
-                    <p class="no-threads">No threads found.</p>
+                    <p class="no-events">No events found.</p>
                 {% endfor %}
             </div>
-        </section>
 
-        {% if current_user.is_authenticated %}
-            <section class="user-actions">
-                <a href="{{ url_for('view_events') }}" class="button">View Events</a>
-                <a href="{{ url_for('create_event') }}" class="button">Create Event</a>
-            </section>
-        {% endif %}
+
+
+
+
+
+        </section>
     </div>
 {% endblock %}
