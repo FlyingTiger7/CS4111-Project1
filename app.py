@@ -643,5 +643,31 @@ def view_events():
     events = result.fetchall()
     return render_template('events.html', events=events, topics=g.topics)
 
+# Add this route to app.py after the view_topic route
+@app.route('/topic/<topic_name>/events')
+def view_topic_events(topic_name):
+    # Query to get events for a specific topic
+    result = g.conn.execute(
+        text("""
+            SELECT e.event_id, e.title, e.capacity, e.timestamp, 
+                   e.email as creator_email, t.topic_name
+            FROM ccr2157.event_created_by e
+            JOIN ccr2157.under u ON e.event_id = u.event_id 
+                AND e.email = u.app_user_email
+            JOIN ccr2157.topic t ON u.topic_id = t.topic_id
+            WHERE t.topic_name = :topic_name
+            ORDER BY e.timestamp DESC
+        """),
+        {"topic_name": topic_name}
+    )
+    events = result.fetchall()
+    
+    return render_template(
+        'topic_events.html',
+        topic_name=topic_name,
+        events=events,
+        topics=g.topics
+    )
+
 if __name__ == '__main__':
     app.run(debug=True)
