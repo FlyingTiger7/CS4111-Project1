@@ -9,13 +9,16 @@
             <h2 style="margin: 0;">{{ topic_name }}</h2>
             {% if current_user.is_authenticated %}
                 <form action="{{ url_for('subscribe', topic_name=topic_name) }}" method="post" style="display: inline;">
-                    <button type="submit" class="button-subscribe">
+                    
                         {% if is_subscribed %}
+                        <button type="submit" class="button-subscribe" style="background-color: purple;">
                             Unsubscribe
+                        </button>
                         {% else %}
+                        <button type="submit" class="button-subscribe" style="background-color: #007BFF;">
                             Subscribe
+                        </button>
                         {% endif %}
-                    </button>
                 </form>
                 <a href="{{ url_for('create_thread', topic_name=topic_name) }}" class="button">Create Thread</a>
             {% endif %}

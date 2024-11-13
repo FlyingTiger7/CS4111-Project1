@@ -21,10 +21,11 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 class User(UserMixin):
-    def __init__(self, email, priv):
+    def __init__(self,email,priv,pfp):
         self.email = email
         self.priv = priv
-
+    
+        
         
 
     def get_id(self):
@@ -37,6 +38,8 @@ def load_user(email):
         text("SELECT email,privileges as priv FROM ccr2157.app_user WHERE email = :email"),
         {"email": email}
     )
+    
+    print(user_row)
     user_row = result.fetchone()
     if user_row:
         return User(user_row.email,user_row.priv)
