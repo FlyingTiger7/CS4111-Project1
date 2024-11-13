@@ -10,13 +10,37 @@
         <a href="{{ url_for('create_event') }}" class="button">Create New Event</a>
         {% endif %}
     </div>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-messages" style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <div class="flash-message" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
 
     {% if events %}
         {% for event in events %}
         <div class="event-card">
-            <h3>{{ event.title }}</h3>
+            <div class="event-box" style="display: flex">
+                <h3 style="margin-right: 8px;">{{ event.title }}</h3>
+                <form action="{{ url_for('attend_event',event_id=event.event_id) }}" method="post"> 
+                    {% if event.event_id in attend %}
+                    <button type="submit" style="background-color: #ff0000 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                        x
+                    </button>
+                    {% else %}
+                    <button type="submit" style="background-color: #34b233 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
+                        ✔ 
+                    </button>
+                    {% endif %}
+                </form>
+            </div>
             <div class="event-meta">
-                <span>Capacity: {{ event.capacity }}</span>
+                <span>Capacity: {{ event.event_attendence }}/{{ event.capacity }}</span>
                 <span>Created by: {{ event.creator_email }}</span>
                 <span>Date: {{ event.timestamp }}</span>
             </div>

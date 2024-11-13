@@ -89,8 +89,20 @@ def before_request():
             {"email": current_user.get_id()}
         )
         g.followers = [row[0] for row in result]
+
+        result = g.conn.execute(
+            text("SELECT event_id FROM ccr2157.event_attendence sub WHERE email = :email"),
+            {"email": current_user.get_id()}
+        )
+        g.event_attendence = [row[0] for row in result]
+
     else:
         g.followers = []
+        g.event_attendence = []
+
+    
+    
+    
 
 @app.teardown_request
 def teardown_request(exception):
@@ -168,7 +180,7 @@ def subscribe(topic_name):
     topic = result.fetchone()
     if topic:
         topic_id = topic[0]
-        # Insert the subscription record into the subscriptions table 
+        # Find the subscription record
         existing_subscription = g.conn.execute(
             text("SELECT * FROM ccr2157.subscribe WHERE email = :email AND topic_id = :topic_id"),
             {"email": current_user.get_id(), "topic_id": topic_id}
@@ -631,31 +643,69 @@ def view_events():
     events = result.fetchall()
     return render_template('events.html', events=events, topics=g.topics)
 
+
+
+
 # Add this route to app.py after the view_topic route
 @app.route('/topic/<topic_name>/events')
 def view_topic_events(topic_name):
     # Query to get events for a specific topic
     result = g.conn.execute(
         text("""
-            SELECT e.event_id, e.title, e.capacity, e.timestamp, 
-                   e.email as creator_email, t.topic_name
+            SELECT e.event_id, e.title, e.capacity, e.timestamp,
+                   e.email as creator_email, t.topic_name, count(ea.event_id) as event_attendence
             FROM ccr2157.event_created_by e
             JOIN ccr2157.under u ON e.event_id = u.event_id 
                 AND e.email = u.app_user_email
             JOIN ccr2157.topic t ON u.topic_id = t.topic_id
+            LEFT JOIN ccr2157.event_attendence ea on e.event_id = ea.event_id
             WHERE t.topic_name = :topic_name
+            GROUP BY e.event_id, e.title, e.capacity, e.timestamp,
+                   creator_email, t.topic_name
             ORDER BY e.timestamp DESC
         """),
         {"topic_name": topic_name}
     )
     events = result.fetchall()
+
+    for event in events:
+        print(event)
+
+
     
     return render_template(
         'topic_events.html',
         topic_name=topic_name,
         events=events,
-        topics=g.topics
+        topics=g.topics,
+        attend=g.event_attendence
     )
+
+@app.route('/<event_id>/attend', methods=['GET', 'POST'])
+@login_required
+def attend_event(event_id):
+    existing_attendence = g.conn.execute(
+            text("SELECT * FROM ccr2157.event_attendence WHERE email=:email and event_id=:event_id"),
+            {"email": current_user.email, "event_id": event_id}
+        ).fetchone()
+
+    is_attending = existing_attendence is not None
+    
+    if is_attending:
+        g.conn.execute(
+            text("DELETE FROM ccr2157.event_attendence WHERE email=:email and event_id=:event_id"),
+            {"email": current_user.email, "event_id": event_id})
+        g.conn.commit() 
+        flash("You are not attending this event anymore.")
+    
+    else:
+        g.conn.execute(text("INSERT INTO ccr2157.event_attendence(email,event_id) Values(:email,:event_id)"),
+        {"email": current_user.email, "event_id": event_id})
+        g.conn.commit() 
+        flash("You are attending this event.")
+       
+        
+    return redirect(request.referrer)
 
 if __name__ == '__main__':
     app.run(debug=True)

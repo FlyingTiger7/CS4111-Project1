@@ -43,12 +43,14 @@
                             <button class="like-button" data-comment-id="{{ comment.comment_id }}">
                                 <span class="like-count">{{ comment.like_count }}</span> likes
                             </button>
+                            {% if current_user.priv == 1 or comment.commenter == current_user.email%}
                             <form action="{{ url_for('delete_comment',thread_id=thread.thread_id,
                                             email=comment.commenter, comment_id=comment.comment_id) }}" method="post"> 
                                 <button type="submit" style="background-color: #ff0000; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
                                     x
                                 </button>
                             </form>
+                            {% endif %}
                         {% else %}
                             <span class="like-count">{{ comment.like_count }} likes</span>
                         {% endif %}
