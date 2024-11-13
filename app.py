@@ -21,7 +21,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 class User(UserMixin):
-    def __init__(self,email,priv,pfp):
+    def __init__(self,email,priv):
         self.email = email
         self.priv = priv
     
@@ -39,7 +39,6 @@ def load_user(email):
         {"email": email}
     )
     
-    print(user_row)
     user_row = result.fetchone()
     if user_row:
         return User(user_row.email,user_row.priv)
@@ -59,7 +58,7 @@ def login():
         user_row = result.fetchone()
 
         if user_row and user_row[1] == password:
-            user = User(user_row[0])
+            user = User(user_row[0],null)
             login_user(user)
             flash('Logged in successfully.', 'success')
             return redirect(url_for('home'))
