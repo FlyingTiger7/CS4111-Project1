@@ -8,11 +8,11 @@
 </head>
 <body>
     <header>
-        <h1>Welcome to Fitdit</h1>
+        <h1>Fitdit</h1>
         
         <div class="login-bar">
             {% if current_user.is_authenticated %}
-                Welcome, {{ current_user.email }}! 
+                    {{ current_user.email }}
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>

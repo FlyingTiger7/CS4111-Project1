@@ -44,33 +44,12 @@
 
 
 
-
-
-    {% for thread in top_threads %}
-    <div class="event-card">
-        <div class="event-box" style="display: flex">
-            <h3 >{{ thread.title }}</h3>
-        </div>
-        <div style="margin-bottom: 10px;">
-            {{ thread.body }}
-        </div>
-        <div class="event-meta">
-            <span>Likes: {{ thread.like_count }}</span>
-            <span>Created by: {{ thread.email }}</span>
-            <span>Date: {{ thread.timestamp }}</span>
-        </div>
-    </div>
-    {% endfor %}
-
-
-
-
     <!-- Threads List Section -->
     <div class="thread-list">
         {% for thread in topic_threads %}
             <div class="event-card">
                 <h3>
-                    <a href="{{ url_for('view_thread', thread_id=thread.thread_id, topic_name=topic_name) }}" style="text-decoration: none; color: inherit;"
+                    <a href="{{ url_for('view_thread', thread_id=thread.thread_id) }}" style="text-decoration: none; color: inherit;"
                     onmouseover="this.style.color='#3498db';" onmouseout="this.style.color='inherit';">
                         {{ thread.title }}
                     </a>

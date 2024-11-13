@@ -209,14 +209,14 @@ def subscribe(topic_name):
     return redirect(request.referrer)
 
 
-@app.route('/topic/<topic_name>/thread/<int:thread_id>', methods=['GET', 'POST'])
-def view_thread(topic_name, thread_id):
+@app.route('/thread/<int:thread_id>', methods=['GET', 'POST'])
+def view_thread(thread_id):
     if request.method == 'POST' and current_user.is_authenticated:
         comment_text = request.form.get('comment')
         
         if not comment_text:
             flash('Comment cannot be empty', 'error')
-            return redirect(url_for('view_thread', topic_name=topic_name, thread_id=thread_id))
+            return redirect(url_for('view_thread', thread_id=thread_id))
 
         try:
             # Get next comment_id
@@ -252,7 +252,7 @@ def view_thread(topic_name, thread_id):
             print(f"Error adding comment: {str(e)}")
             flash(f'Error adding comment: {str(e)}', 'error')
             
-        return redirect(url_for('view_thread', topic_name=topic_name, thread_id=thread_id))
+        return redirect(url_for('view_thread', thread_id=thread_id))
 
     # Get thread details
     thread_result = g.conn.execute(
@@ -296,7 +296,6 @@ def view_thread(topic_name, thread_id):
         "thread.html",
         thread=thread,
         comments=comments,
-        topic_name=topic_name,
         topics=g.topics,
         followed=g.followers
         
@@ -490,13 +489,15 @@ def home():
     if current_user.is_authenticated:
         result = g.conn.execute(text("""
             WITH top_liked_threads AS (
-                SELECT thread_id, COUNT(*) like_count 
-                FROM ccr2157.likes_has lh 
-                JOIN ccr2157.comment comment ON lh.comment_id = comment.comment_id
+                SELECT thread.thread_id, count(lh.comment_id) as like_count
+                FROM ccr2157.comment comment
+                LEFT JOIN ccr2157.likes_has lh ON lh.comment_id = comment.comment_id
                 JOIN ccr2157.reply reply ON comment.comment_id = reply.comment_id
-                GROUP BY reply.thread_id
+                RIGHT JOIN ccr2157.thread thread ON reply.thread_id = thread.thread_id
+                GROUP BY thread.thread_id
+               
             )
-            SELECT tls.like_count, title, body, timestamp, creates.email
+            SELECT tls.thread_id thread_id, tls.like_count, title, body, timestamp, creates.email
             FROM ccr2157.subscribe sub 
             JOIN ccr2157.part_of ON sub.topic_id = part_of.topic_id
             JOIN top_liked_threads tls ON part_of.thread_id = tls.thread_id
@@ -537,12 +538,27 @@ def home():
                 ORDER BY like_count DESC
                 LIMIT 3
             )
-            SELECT tlc.like_count, thread.title, thread.body, thread.timestamp, creates.email
+            SELECT tlc.like_count, thread.title, thread.body, thread.timestamp, creates.email, tlc.thread_id
             FROM top_liked_comment tlc
             JOIN ccr2157.thread thread ON tlc.thread_id = thread.thread_id
             JOIN ccr2157.creates creates ON creates.thread_id = tlc.thread_id
         """))
-    
+
+        events = g.conn.execute(text("""SELECT e.event_id, e.title, e.capacity, e.timestamp,
+                   e.email as creator_email, t.topic_name, count(ea.event_id) as count
+            FROM ccr2157.event_created_by e
+            JOIN ccr2157.under u ON e.event_id = u.event_id 
+                AND e.email = u.app_user_email
+            JOIN ccr2157.topic t ON u.topic_id = t.topic_id
+            LEFT JOIN ccr2157.event_attendence ea ON ea.event_id = e.event_id
+            JOIN ccr2157.follow f ON e.email = f.followed_email
+
+            GROUP BY e.event_id, e.title, e.capacity, e.timestamp,
+                  creator_email, t.topic_name
+            ORDER BY count DESC
+            LIMIT 3
+            """))
+        
     top_threads = result.fetchall()
     top_events = events.fetchall()
     return render_template('home.html', 
