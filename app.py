@@ -312,86 +312,72 @@ def delete_comment(comment_id, thread_id, email):
 @login_required
 def like_comment(comment_id):
     try:
-        # Get the comment to verify it exists
-        comment_result = g.conn.execute(
-            text("SELECT comment_id FROM ccr2157.comment WHERE comment_id = :comment_id"),
-            {"comment_id": comment_id}
-        ).fetchone()
+        # Start transaction
+        g.conn.execute(text("BEGIN"))
         
-        if not comment_result:
-            return jsonify({
-                'success': False,
-                'error': 'Comment not found'
-            }), 404
+        # Get next like_id outside the conditional
+        next_like_id = g.conn.execute(
+            text("SELECT COALESCE(MAX(like_id), 0) + 1 FROM ccr2157.likes_has")
+        ).scalar()
 
-        # Check if like exists
-        result = g.conn.execute(
+        # Check if this SPECIFIC like_id exists for this comment
+        existing_like = g.conn.execute(
             text("""
             SELECT like_id 
             FROM ccr2157.likes_has 
+            WHERE comment_id = :comment_id 
+            AND like_id = :like_id
+            """),
+            {
+                "comment_id": comment_id,
+                "like_id": next_like_id - 1  # Check the previous like_id
+            }
+        ).fetchone()
+
+        if existing_like:
+            # Unlike - remove the like
+            g.conn.execute(
+                text("""
+                DELETE FROM ccr2157.likes_has 
+                WHERE comment_id = :comment_id 
+                AND like_id = :like_id
+                """),
+                {"comment_id": comment_id, "like_id": existing_like[0]}
+            )
+            action = 'unliked'
+        else:
+            # Add new like
+            g.conn.execute(
+                text("""
+                INSERT INTO ccr2157.likes_has (like_id, like_timestamp, comment_id)
+                VALUES (:like_id, CURRENT_DATE, :comment_id)
+                """),
+                {"like_id": next_like_id, "comment_id": comment_id}
+            )
+            action = 'liked'
+        
+        # Get updated like count
+        final_count = g.conn.execute(
+            text("""
+            SELECT COUNT(*) 
+            FROM ccr2157.likes_has
             WHERE comment_id = :comment_id
-            ORDER BY like_id DESC
-            LIMIT 1
             """),
             {"comment_id": comment_id}
-        )
-        existing_like = result.fetchone()
+        ).scalar()
         
-        try:
-            # Start transaction
-            g.conn.execute(text("BEGIN"))
-            
-            if existing_like:
-                # Unlike - remove like
-                g.conn.execute(
-                    text("""
-                    DELETE FROM ccr2157.likes_has 
-                    WHERE comment_id = :comment_id 
-                    AND like_id = :like_id
-                    """),
-                    {"comment_id": comment_id, "like_id": existing_like[0]}
-                )
-                action = 'unliked'
-            else:
-                # Add new like
-                result = g.conn.execute(text("SELECT COALESCE(MAX(like_id), 0) + 1 FROM ccr2157.likes_has"))
-                next_like_id = result.scalar()
-                
-                g.conn.execute(
-                    text("""
-                    INSERT INTO ccr2157.likes_has (like_id, like_timestamp, comment_id)
-                    VALUES (:like_id, CURRENT_DATE, :comment_id)
-                    """),
-                    {"like_id": next_like_id, "comment_id": comment_id}
-                )
-                action = 'liked'
-            
-            # Get updated like count
-            result = g.conn.execute(
-                text("""
-                SELECT COUNT(*) as like_count
-                FROM ccr2157.likes_has
-                WHERE comment_id = :comment_id
-                """),
-                {"comment_id": comment_id}
-            )
-            like_count = result.scalar()
-            
-            # Commit transaction
-            g.conn.execute(text("COMMIT"))
-            
-            return jsonify({
-                'success': True,
-                'action': action,
-                'likeCount': like_count
-            })
-            
-        except Exception as e:
-            # Rollback on error
-            g.conn.execute(text("ROLLBACK"))
-            raise e
+        # Commit transaction
+        g.conn.execute(text("COMMIT"))
+        
+        return jsonify({
+            'success': True,
+            'action': action,
+            'likeCount': final_count
+        })
             
     except Exception as e:
+        # Rollback on error
+        g.conn.execute(text("ROLLBACK"))
         print(f"Error handling like: {str(e)}")
         return jsonify({
             'success': False,
