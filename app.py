@@ -96,7 +96,6 @@ def before_request():
         )
         g.event_attendence = [row[0] for row in result]
 
-        print(g.followers)
 
     else:
         g.followers = []
@@ -324,81 +323,29 @@ def delete_comment(comment_id, thread_id, email):
     return redirect(request.referrer)
 
 
-@app.route('/like_comment/<int:comment_id>', methods=['POST'])
+@app.route('/like_comment/<int:comment_id>>', methods=['GET','POST'])
 @login_required
 def like_comment(comment_id):
-    try:
-        # Start transaction
-        g.conn.execute(text("BEGIN"))
-        
-        # Get next like_id outside the conditional
-        next_like_id = g.conn.execute(
-            text("SELECT COALESCE(MAX(like_id), 0) + 1 FROM ccr2157.likes_has")
-        ).scalar()
-
-        # Check if this SPECIFIC like_id exists for this comment
-        existing_like = g.conn.execute(
-            text("""
-            SELECT like_id 
-            FROM ccr2157.likes_has 
-            WHERE comment_id = :comment_id 
-            AND like_id = :like_id
-            """),
-            {
-                "comment_id": comment_id,
-                "like_id": next_like_id - 1  # Check the previous like_id
-            }
+    existing_like = g.conn.execute(
+            text("SELECT * FROM ccr2157.likes_has WHERE email=:email and comment_id=:comment_id"),
+            {"comment_id": comment_id, "email": current_user.email}
         ).fetchone()
+    
+    like_exists = existing_like is not None
 
-        if existing_like:
-            # Unlike - remove the like
-            g.conn.execute(
-                text("""
-                DELETE FROM ccr2157.likes_has 
-                WHERE comment_id = :comment_id 
-                AND like_id = :like_id
-                """),
-                {"comment_id": comment_id, "like_id": existing_like[0]}
-            )
-            action = 'unliked'
-        else:
-            # Add new like
-            g.conn.execute(
-                text("""
-                INSERT INTO ccr2157.likes_has (like_id, like_timestamp, comment_id)
-                VALUES (:like_id, CURRENT_DATE, :comment_id)
-                """),
-                {"like_id": next_like_id, "comment_id": comment_id}
-            )
-            action = 'liked'
-        
-        # Get updated like count
-        final_count = g.conn.execute(
-            text("""
-            SELECT COUNT(*) 
-            FROM ccr2157.likes_has
-            WHERE comment_id = :comment_id
-            """),
-            {"comment_id": comment_id}
-        ).scalar()
-        
-        # Commit transaction
-        g.conn.execute(text("COMMIT"))
-        
-        return jsonify({
-            'success': True,
-            'action': action,
-            'likeCount': final_count
-        })
-            
-    except Exception as e:
-        # Rollback on error
-        g.conn.execute(text("ROLLBACK"))
-        print(f"Error handling like: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+    if like_exists:
+        g.conn.execute(
+            text("DELETE FROM ccr2157.likes_has WHERE email=:email and comment_id=:comment_id"),
+            {"comment_id": comment_id, "email": current_user.email})
+        g.conn.commit() 
+    
+    else:
+        g.conn.execute(
+            text("INSERT INTO ccr2157.likes_has(email,comment_id) VALUES (:email,:comment_id) "),
+            {"comment_id": comment_id, "email": current_user.email})
+        g.conn.commit() 
+
+    return redirect(request.referrer)
     
 @app.route('/topic/<topic_name>/create_thread', methods=['GET', 'POST'])
 @login_required
@@ -589,7 +536,6 @@ def follow(followed_email):
             {"user_email": current_user.get_id(), "followed_email": followed_email}
         )
         g.conn.commit()
-        print("followed work!")
         flash("You have unfollowed: " + followed_email)
     return redirect(request.referrer)
 
@@ -713,10 +659,6 @@ def view_topic_events(topic_name):
         {"topic_name": topic_name}
     )
     events = result.fetchall()
-
-    for event in events:
-        print(event)
-
 
     
     return render_template(

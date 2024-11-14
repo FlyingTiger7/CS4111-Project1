@@ -11,7 +11,7 @@
         {% if current_user.is_authenticated %}
         <h2>Popular Threads on Topics You Follow </h2>
             {% else %}
-        <h2>Popular events</h2>
+        <h2>Popular Threads</h2>
         {% endif %}
 
         {% for thread in top_threads %}
@@ -39,7 +39,7 @@
             {% if current_user.is_authenticated %}
                 <h2>Popular Events Hosted by Your Followers </h2>
             {% else %}
-                <h2>Popular events</h2>
+                <h2>Popular Events</h2>
             {% endif %}
 
             <div class="events-list">

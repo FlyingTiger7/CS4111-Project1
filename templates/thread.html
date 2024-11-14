@@ -65,7 +65,8 @@
                         <div>
                             <span class="comment-date">{{ comment.timestamp }}</span>
                             {% if current_user.is_authenticated %}
-                                <button class="like-button" data-comment-id="{{ comment.comment_id }}">
+                            <form action="{{ url_for('like_comment', comment_id=comment.comment_id ) }}" method="post" class="follow-form" style="display: inline; margin: 0; padding: 0;">
+                                <button type="submit" class="like-button">
                                     <span class="like-count">{{ comment.like_count }}</span> likes
                                 </button>
                                 {% if current_user.priv == 1 or comment.commenter == current_user.email%}
@@ -89,57 +90,4 @@
     </div>
 </div>
 
-{% endblock %}
-
-
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add click event listeners to all like buttons
-    document.querySelectorAll('.like-button').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const commentId = this.dataset.commentId;
-            likeComment(commentId, this);
-        });
-    });
-});
-
-function likeComment(commentId, buttonElement) {
-    fetch(`/like_comment/${commentId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'same-origin'  // This ensures cookies are sent with the request
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Update the like count
-            const likeCountElement = buttonElement.querySelector('.like-count');
-            likeCountElement.textContent = `${data.likeCount}`;
-            
-            // Toggle the liked class based on the action
-            if (data.action === 'liked') {
-                buttonElement.classList.add('liked');
-            } else {
-                buttonElement.classList.remove('liked');
-            }
-        } else {
-            console.error('Like operation failed:', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-</script>
 {% endblock %}

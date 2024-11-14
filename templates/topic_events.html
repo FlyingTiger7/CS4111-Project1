@@ -26,7 +26,7 @@
         {% for event in events %}
         <div class="event-card">
             <div class="event-box" style="display: flex">
-                <h3 >{{ event.title }}</h3>
+                <h3 style="margin-right: 10px;">{{ event.title }}</h3>
                 <form action="{{ url_for('attend_event',event_id=event.event_id) }}" method="post"> 
                     {% if event.event_id in attend %}
                     <button type="submit" style="background-color: #ff0000 ; color: rgb(255, 255, 255); border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer;">
