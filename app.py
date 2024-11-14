@@ -323,7 +323,7 @@ def delete_comment(comment_id, thread_id, email):
     return redirect(request.referrer)
 
 
-@app.route('/like_comment/<int:comment_id>>', methods=['GET','POST'])
+@app.route('/like_comment/<int:comment_id>', methods=['GET','POST'])
 @login_required
 def like_comment(comment_id):
     existing_like = g.conn.execute(
@@ -393,7 +393,7 @@ def create_thread(topic_name):
             )
             
             # Create thread-user relationship
-            g.conn.execute(
+            g.conn.execute( 
                 text("""
                     INSERT INTO ccr2157.creates (thread_id, email)
                     VALUES (:thread_id, :email)
