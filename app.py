@@ -96,7 +96,6 @@ def before_request():
         )
         g.event_attendence = [row[0] for row in result]
 
-        print(g.followers)
 
     else:
         g.followers = []
@@ -214,58 +213,25 @@ def view_thread(thread_id):
     if request.method == 'POST' and current_user.is_authenticated:
         comment_text = request.form.get('comment')
         
-        # Input validation
-        if not comment_text or not comment_text.strip():
+        if not comment_text:
             flash('Comment cannot be empty', 'error')
             return redirect(url_for('view_thread', thread_id=thread_id))
-            
-        # Sanitize the comment text - remove any dangerous characters or patterns
-        comment_text = comment_text.strip()
-        
-        # Validate thread_id
-        if not isinstance(thread_id, int) or thread_id < 0:
-            flash('Invalid thread ID', 'error')
-            return redirect(url_for('home'))
 
         try:
-            # Use a transaction to ensure data consistency
-            g.conn.execute(text("BEGIN"))
-            
-            # Validate that the thread exists
-            thread_exists = g.conn.execute(
-                text("SELECT 1 FROM ccr2157.thread WHERE thread_id = :thread_id"),
-                {"thread_id": thread_id}
-            ).fetchone()
-            
-            if not thread_exists:
-                g.conn.execute(text("ROLLBACK"))
-                flash('Thread not found', 'error')
-                return redirect(url_for('home'))
+            # Get next comment_id
+            result = g.conn.execute(text("SELECT MAX(comment_id) FROM ccr2157.comment"))
+            next_id = (result.scalar() or 0) + 1
 
-            # Get next comment_id using a separate transaction
-            result = g.conn.execute(
-                text("SELECT COALESCE(MAX(comment_id), 0) + 1 FROM ccr2157.comment")
-            )
-            next_id = result.scalar()
-            
-            if next_id is None or not isinstance(next_id, int):
-                g.conn.execute(text("ROLLBACK"))
-                flash('Error generating comment ID', 'error')
-                return redirect(url_for('view_thread', thread_id=thread_id))
-
-            # Insert comment using parameterized query
+            # Insert comment
             g.conn.execute(
                 text("""
                 INSERT INTO ccr2157.comment (comment_id, comment, timestamp)
                 VALUES (:comment_id, :comment, CURRENT_DATE)
                 """),
-                {
-                    "comment_id": next_id,
-                    "comment": comment_text
-                }
+                {"comment_id": next_id, "comment": comment_text}
             )
 
-            # Create reply connection using parameterized query
+            # Create reply connection
             g.conn.execute(
                 text("""
                 INSERT INTO ccr2157.reply (comment_id, email, thread_id)
@@ -278,77 +244,61 @@ def view_thread(thread_id):
                 }
             )
 
-            # Commit the transaction
-            g.conn.execute(text("COMMIT"))
+            g.conn.execute(text("COMMIT;"))
             flash('Comment added successfully', 'success')
             
         except Exception as e:
-            # Rollback on any error
-            g.conn.execute(text("ROLLBACK"))
             print(f"Error adding comment: {str(e)}")
-            flash('Error adding comment. Please try again.', 'error')
+            flash(f'Error adding comment: {str(e)}', 'error')
             
         return redirect(url_for('view_thread', thread_id=thread_id))
 
-    # Get thread details with parameterized query
-    try:
-        thread_result = g.conn.execute(
-            text("""
-            SELECT thread.thread_id, thread.title, thread.body, thread.timestamp, 
-                   creates.email as author
-            FROM ccr2157.thread thread
-            JOIN ccr2157.creates creates ON creates.thread_id = thread.thread_id
-            WHERE thread.thread_id = :thread_id
-            """),
-            {"thread_id": thread_id}
-        )
-        thread = thread_result.fetchone()
-        
-        if thread is None:
-            return "Thread not found", 404
+    # Get thread details
+    thread_result = g.conn.execute(
+        text("""
+        SELECT thread.thread_id, thread.title, thread.body, thread.timestamp, creates.email as author
+        FROM ccr2157.thread thread
+        JOIN ccr2157.creates creates ON creates.thread_id = thread.thread_id
+        WHERE thread.thread_id = :thread_id
+        """),
+        {"thread_id": thread_id}
+    )
+    thread = thread_result.fetchone()
+    
+    if thread is None:
+        return "Thread not found", 404
 
-        # Get comments with parameterized query
-        comments_result = g.conn.execute(
-            text("""
-            SELECT 
-                comment.comment_id,
-                comment.comment,
-                comment.timestamp,
-                reply.email as commenter,
-                COALESCE(like_counts.like_count, 0) as like_count,
-                CASE WHEN user_likes.user_email IS NOT NULL THEN TRUE ELSE FALSE END as user_has_liked
-            FROM ccr2157.comment comment
-            JOIN ccr2157.reply reply ON reply.comment_id = comment.comment_id
-            LEFT JOIN (
-                SELECT comment_id, COUNT(*) as like_count
-                FROM ccr2157.likes_has
-                GROUP BY comment_id
-            ) like_counts ON like_counts.comment_id = comment.comment_id
-            LEFT JOIN ccr2157.likes_has user_likes ON 
-                user_likes.comment_id = comment.comment_id AND 
-                user_likes.user_email = :current_user
-            WHERE reply.thread_id = :thread_id
-            ORDER BY comment.timestamp DESC
-            """),
-            {
-                "thread_id": str(thread_id),
-                "current_user": current_user.email if current_user.is_authenticated else None
-            }
-        )
-        comments = comments_result.fetchall()
+    # Get comments with user info and like counts
+    comments_result = g.conn.execute(
+        text("""
+        SELECT 
+            comment.comment_id,
+            comment.comment,
+            comment.timestamp,
+            reply.email as commenter,
+            COALESCE(like_counts.like_count, 0) as like_count
+        FROM ccr2157.comment comment
+        JOIN ccr2157.reply reply ON reply.comment_id = comment.comment_id
+        LEFT JOIN (
+            SELECT comment_id, COUNT(*) as like_count
+            FROM ccr2157.likes_has
+            GROUP BY comment_id
+        ) like_counts ON like_counts.comment_id = comment.comment_id
+        WHERE reply.thread_id = :thread_id
+        ORDER BY comment.timestamp DESC
+        """),
+        {"thread_id": thread_id}
+    )
+    comments = comments_result.fetchall()
 
-        return render_template(
-            "thread.html",
-            thread=thread,
-            comments=comments,
-            topics=g.topics,
-            followed=g.followers
-        )
+    return render_template(
+        "thread.html",
+        thread=thread,
+        comments=comments,
+        topics=g.topics,
+        followed=g.followers
         
-    except Exception as e:
-        print(f"Error loading thread: {str(e)}")
-        flash('Error loading thread', 'error')
-        return redirect(url_for('home'))
+    )
 
 @app.route('/thread/<int:thread_id>/<comment_id>/delete/<email>', methods=['POST'])
 def delete_comment(comment_id, thread_id, email):
@@ -373,81 +323,29 @@ def delete_comment(comment_id, thread_id, email):
     return redirect(request.referrer)
 
 
-@app.route('/like_comment/<int:comment_id>', methods=['POST'])
+@app.route('/like_comment/<int:comment_id>>', methods=['GET','POST'])
 @login_required
 def like_comment(comment_id):
-    try:
-        # Start transaction
-        g.conn.execute(text("BEGIN"))
-        
-        # Get next like_id outside the conditional
-        next_like_id = g.conn.execute(
-            text("SELECT COALESCE(MAX(like_id), 0) + 1 FROM ccr2157.likes_has")
-        ).scalar()
-
-        # Check if this SPECIFIC like_id exists for this comment
-        existing_like = g.conn.execute(
-            text("""
-            SELECT like_id 
-            FROM ccr2157.likes_has 
-            WHERE comment_id = :comment_id 
-            AND like_id = :like_id
-            """),
-            {
-                "comment_id": comment_id,
-                "like_id": next_like_id - 1  # Check the previous like_id
-            }
+    existing_like = g.conn.execute(
+            text("SELECT * FROM ccr2157.likes_has WHERE email=:email and comment_id=:comment_id"),
+            {"comment_id": comment_id, "email": current_user.email}
         ).fetchone()
+    
+    like_exists = existing_like is not None
 
-        if existing_like:
-            # Unlike - remove the like
-            g.conn.execute(
-                text("""
-                DELETE FROM ccr2157.likes_has 
-                WHERE comment_id = :comment_id 
-                AND like_id = :like_id
-                """),
-                {"comment_id": comment_id, "like_id": existing_like[0]}
-            )
-            action = 'unliked'
-        else:
-            # Add new like
-            g.conn.execute(
-                text("""
-                INSERT INTO ccr2157.likes_has (like_id, like_timestamp, comment_id)
-                VALUES (:like_id, CURRENT_DATE, :comment_id)
-                """),
-                {"like_id": next_like_id, "comment_id": comment_id}
-            )
-            action = 'liked'
-        
-        # Get updated like count
-        final_count = g.conn.execute(
-            text("""
-            SELECT COUNT(*) 
-            FROM ccr2157.likes_has
-            WHERE comment_id = :comment_id
-            """),
-            {"comment_id": comment_id}
-        ).scalar()
-        
-        # Commit transaction
-        g.conn.execute(text("COMMIT"))
-        
-        return jsonify({
-            'success': True,
-            'action': action,
-            'likeCount': final_count
-        })
-            
-    except Exception as e:
-        # Rollback on error
-        g.conn.execute(text("ROLLBACK"))
-        print(f"Error handling like: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+    if like_exists:
+        g.conn.execute(
+            text("DELETE FROM ccr2157.likes_has WHERE email=:email and comment_id=:comment_id"),
+            {"comment_id": comment_id, "email": current_user.email})
+        g.conn.commit() 
+    
+    else:
+        g.conn.execute(
+            text("INSERT INTO ccr2157.likes_has(email,comment_id) VALUES (:email,:comment_id) "),
+            {"comment_id": comment_id, "email": current_user.email})
+        g.conn.commit() 
+
+    return redirect(request.referrer)
     
 @app.route('/topic/<topic_name>/create_thread', methods=['GET', 'POST'])
 @login_required
@@ -638,7 +536,6 @@ def follow(followed_email):
             {"user_email": current_user.get_id(), "followed_email": followed_email}
         )
         g.conn.commit()
-        print("followed work!")
         flash("You have unfollowed: " + followed_email)
     return redirect(request.referrer)
 
@@ -762,10 +659,6 @@ def view_topic_events(topic_name):
         {"topic_name": topic_name}
     )
     events = result.fetchall()
-
-    for event in events:
-        print(event)
-
 
     
     return render_template(
